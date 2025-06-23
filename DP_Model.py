@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import math
 import random
-from flask import Flask, request, render_template_string
+from flask import Flask, request, render_template_string, redirect, url_for
 
 # ---------------------------
 # Synthetic Dataset
@@ -32,8 +32,12 @@ def add_laplace_noise(value: float, epsilon: float, sensitivity: float = 1.0) ->
 # ---------------------------
 class DPEngine:
     def __init__(self, epsilon: float):
+        self.original_epsilon = epsilon
         self.epsilon = epsilon
         self.remaining_budget = epsilon
+
+    def reset(self):
+        self.remaining_budget = self.original_epsilon
 
     def _use_budget(self, cost: float):
         if cost > self.remaining_budget:
@@ -51,6 +55,19 @@ class DPEngine:
         avg = values.mean() if not values.empty else 0.0
         sensitivity = (values.max() - values.min()) / len(values) if len(values) > 0 else 1.0
         return add_laplace_noise(avg, epsilon, sensitivity)
+    
+    def private_min(self, values: pd.Series, epsilon: float) -> float:
+        self._use_budget(epsilon)
+        return add_laplace_noise(values.min(), epsilon, sensitivity=5)  # sensitivity estimated
+
+    def private_max(self, values: pd.Series, epsilon: float) -> float:
+        self._use_budget(epsilon)
+        return add_laplace_noise(values.max(), epsilon, sensitivity=5)
+    
+    def private_std(self, values: pd.Series, epsilon: float) -> float:
+        self._use_budget(epsilon)
+        std_dev = values.std()
+        return add_laplace_noise(std_dev, epsilon, sensitivity=10)
 
 # ---------------------------
 # Flask Web App
@@ -70,8 +87,17 @@ HTML_FORM = """
             padding: 10px;
             margin-top: 20px;
         }
-    </style>
-    <script src="/static/epsilon_ui.js"></script>
+        .summary-section {
+            display: flex;
+            gap: 60px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .summary-section ul {
+            margin-top: 0;
+        }
+    </style> 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <h2>DP Query Interface</h2>
@@ -82,11 +108,38 @@ HTML_FORM = """
         Epsilon for Average Age: <input type="number" step="0.01" name="epsilon_avg"><br>
         <input type="submit" value="Submit">
     </form>
+
     {% if results %}
-        <h3>Results</h3>
-        <p><b>DP Count:</b> {{ results['count'] }}</p>
-        <p><b>DP Avg Age:</b> {{ results['avg_age'] }}</p>
-        <p><b>Remaining Budget:</b> {{ results['remaining'] }}</p>
+    <div class="info">
+      <h3>Query Summary</h3>
+      <div class="summary-section">
+        <div>
+          <p><b>Inputs:</b></p>
+          <ul>
+            <li>Town: <code>{{ results['town'] }}</code></li>
+            <li>Diagnosis: <code>{{ results['diagnosis'] }}</code></li>
+            <li>Epsilon (Count): <code>{{ results['epsilon_count'] }}</code></li>
+            <li>Epsilon (Average): <code>{{ results['epsilon_avg'] }}</code></li>
+          </ul>
+        </div>
+        <div>
+          <p><b>Outputs:</b></p>
+          <ul>
+            <li>DP Count: <code>{{ results['count'] }}</code></li>
+            <li>DP Avg Age: <code>{{ results['avg_age'] }}</code></li>
+            <li>DP Min Age: <code>{{ results['min_age'] }}</code></li>
+            <li>DP Max Age: <code>{{ results['max_age'] }}</code></li>
+            <li>DP Std Dev: <code>{{ results['std_age'] }}</code></li>
+            <li>Remaining Budget: <code>{{ results['remaining'] }}</code></li>
+          </ul>
+        </div>
+      </div>
+      {% if results['remaining'] == 0.0 %}
+      <form method="get" action="/reset">
+          <button type="submit">Reset Privacy Budget</button>
+      </form>
+      {% endif %}
+    </div>
     {% endif %}
 
     <div class="info">
@@ -112,6 +165,7 @@ HTML_FORM = """
 </html>
 """
 
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     results = None
@@ -128,15 +182,32 @@ def index():
             avg_condition = data['diagnosis'] == diagnosis
             avg_result = dp_engine.private_average(data, 'age', avg_condition, epsilon_avg)
 
+            min_age = dp_engine.private_min(data['age'], epsilon_avg)
+            max_age = dp_engine.private_max(data['age'], epsilon_avg)
+            std_age = dp_engine.private_std(data['age'], epsilon_avg)
+
             results = {
+                'town': town,
+                'diagnosis': diagnosis,
+                'epsilon_count': epsilon_count,
+                'epsilon_avg': epsilon_avg,
                 'count': round(count_result, 2),
                 'avg_age': round(avg_result, 2),
+                'min_age': round(min_age, 2),
+                'max_age': round(max_age, 2),
+                'std_age': round(std_age, 2),
                 'remaining': round(dp_engine.remaining_budget, 2)
             }
+
         except ValueError as e:
-            results = {'count': str(e), 'avg_age': '-', 'remaining': dp_engine.remaining_budget}
+            results = {'count': str(e), 'avg_age': '-', 'remaining': round(dp_engine.remaining_budget, 2)}
 
     return render_template_string(HTML_FORM, results=results)
+
+@app.route('/reset', methods=['GET'])
+def reset():
+    dp_engine.reset()
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)
