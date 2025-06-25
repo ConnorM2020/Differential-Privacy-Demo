@@ -3,9 +3,17 @@
 import numpy as np
 import pandas as pd
 import math
+import os
 import random
-from flask import Flask, jsonify, request, render_template_string, redirect, url_for
+from flask import Flask, jsonify, request, render_template, redirect, url_for
 from faker import Faker
+
+
+TOWN_COORDS = {
+    'Belfast': (54.5973, -5.9301),
+    'Dublin': (53.3498, -6.2603),
+    'Cork': (51.8985, -8.4756),
+}
 
 # ---------------------------
 # Synthetic Dataset
@@ -15,25 +23,35 @@ fake = Faker()
 # filtered_data = ""
 # noisy_data
 def generate_synthetic_patient_data(n=100, seed=None):
+    fake = Faker()
     if seed is not None:
         np.random.seed(seed)
         Faker.seed(seed)
 
-    data = pd.DataFrame([{
-        'forename': fake.first_name(),
-        'surname': fake.last_name(),
-        'age': np.random.randint(20, 70),
-        'gender': np.random.choice(['Male', 'Female']),
-        'town': np.random.choice(['Belfast', 'Dublin', 'Cork']),
-        'diagnosis': np.random.choice(['Diabetes', 'Hypertension', 'Healthy']),
-        'address': fake.address().replace('\n', ', '),
-        'email': fake.email(),
-        'phone_number': fake.phone_number()
-    } for _ in range(n)])
+    patients = []
+    for _ in range(n):
+        town = np.random.choice(list(TOWN_COORDS.keys()))
+        lat, lon = TOWN_COORDS[town]
+        patients.append({
+            'forename': fake.first_name(),
+            'surname': fake.last_name(),
+            'age': np.random.randint(20, 70),
+            'gender': np.random.choice(['Male', 'Female']),
+            'town': town,
+            'town_lat': lat,
+            'town_lon': lon,
+            'diagnosis': np.random.choice(['Diabetes', 'Hypertension', 'Healthy']),
+            'address': fake.address().replace('\n', ', '),
+            'email': fake.email(),
+            'phone_number': fake.phone_number()
+        })
 
-    return data
+    return pd.DataFrame(patients)
+
 
 data = generate_synthetic_patient_data(n=100, seed=42)  # Optional seed for reproducibility
+
+
 
 # ---------------------------
 # Laplace Mechanism
@@ -88,193 +106,13 @@ class DPEngine:
         std_dev = values.std()
         return add_laplace_noise(std_dev, epsilon, sensitivity=10)
 
+
 # ---------------------------
 # Flask Web App
 # ---------------------------
-app = Flask(__name__)
+app = Flask(__name__, template_folder=os.getcwd())
 dp_engine = DPEngine(epsilon=1.0)
-HTML_FORM = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Differential Privacy Demo</title>
-    <style>
-        .info {
-            background: #f9f9f9;
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-top: 20px;
-        }
-        .summary-section {
-            display: flex;
-            gap: 60px;
-            justify-content: center;
-            align-items: flex-start;
-        }
-        .summary-section ul {
-            margin-top: 0;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 6px 10px;
-            border: 1px solid #aaa;
-            font-family: monospace;
-            font-size: 14px;
-        }
-    </style> 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
 
-<script>
-function updateNoiseLabel(val) {
-    val = parseFloat(val).toFixed(2);
-    document.getElementById("epsilon_value").textContent = val;
-    document.querySelector('input[name="epsilon_avg"]').value = val;
-    document.querySelector('input[name="epsilon_count"]').value = val;
-}
-</script>
-
-<body>
-    <h2>DP Query Interface</h2>
-    <form method="post">
-        Town: <input type="text" name="town"><br>
-        Diagnosis: <input type="text" name="diagnosis"><br>
-        Epsilon for Count: <input type="number" step="0.01" name="epsilon_count"><br>
-        Epsilon for Average Age: <input type="number" step="0.01" name="epsilon_avg"><br>
-        # <input type="number" step="0.01" name="epsilon_count" value="0.5"><br>
-        # <input type="number" step="0.01" name="epsilon_avg" value="0.5"><br>
-
-        <input type="submit" value="Submit">
-    </form>
-
-    {% if results %}
-    <div class="info">
-      <h3>Query Summary</h3>
-      <div class="summary-section">
-        <div>
-          <p><b>Inputs:</b></p>
-          <ul>
-            <li>Town: <code>{{ results['town'] }}</code></li>
-            <li>Diagnosis: <code>{{ results['diagnosis'] }}</code></li>
-            <li>Epsilon (Count): <code>{{ results['epsilon_count'] }}</code></li>
-            <li>Epsilon (Average): <code>{{ results['epsilon_avg'] }}</code></li>
-          </ul>
-        </div>
-        <div>
-          <p><b>Outputs:</b></p>
-          <ul>
-            <li>DP Count: <code>{{ results['count'] }}</code></li>
-            <li>DP Avg Age: <code>{{ results['avg_age'] }}</code></li>
-            <li>DP Min Age: <code>{{ results['min_age'] }}</code></li>
-            <li>DP Max Age: <code>{{ results['max_age'] }}</code></li>
-            <li>DP Std Dev: <code>{{ results['std_age'] }}</code></li>
-            <li>Remaining Budget: <code>{{ results['remaining'] }}</code></li>
-          </ul>
-        </div>
-      </div>
-      {% if results['remaining'] == 0.0 %}
-      <form method="get" action="/reset">
-          <button type="submit">Reset Privacy Budget</button>
-      </form>
-      {% endif %}
-    </div>
-    {% endif %}
-
-    {% if sample_data is not none %}
-    <div class="info">
-      <h3>Sample Patient Dataset (First 10 Rows)</h3>
-      <table id="sample_table">
-     <thead>
-        <tr>
-        {% for col in sample_data.columns %}
-            <th>{{ col }}</th>
-        {% endfor %}
-        </tr>
-    </thead>
-    <tbody>
-        {% for row in sample_data.values[:10] %}
-        <tr>
-        {% for item in row %}
-            <td>{{ item }}</td>
-        {% endfor %}
-        </tr>
-        {% endfor %}
-    </tbody>
-    </table>
-
-    </div>
-    {% endif %}
-
-    <div class="info">
-        <h3>Noise Scale Visualization</h3>
-        <p>As epsilon (ε) increases, results become <b>less private</b> but <b>more accurate</b>.</p>
-        
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <label for="epsilon_slider"><b>ε value:</b></label>
-            <input type="range" id="epsilon_slider" min="0.01" max="1.0" step="0.01" value="0.5"
-                oninput="updateNoiseLabel(this.value)">
-            <span id="epsilon_value">0.5</span>
-
-        </div>
-        
-        <div style="margin-top: 10px; display: flex; justify-content: space-between; font-size: 14px;">
-            <span>High Privacy</span>
-            <span>Balanced</span>
-            <span>Low Privacy</span>
-        </div>
-    </div>
-
-
-    <div class="info">
-        <h4>What is Epsilon (ε)?</h4>
-        <p>Epsilon controls how much random noise is added to your query. Lower values mean stronger privacy but more noisy results.</p>
-        <ul>
-            <li><b>ε = 0.1:</b> Very private, very noisy</li>
-            <li><b>ε = 1.0:</b> Balanced privacy and accuracy</li>
-            <li><b>ε = 3.0:</b> Less private, more accurate</li>
-        </ul>
-        <p>Try comparing the same query with ε = 0.1 and ε = 1.0 to see the effect.</p>
-    </div>
-
-    <div class="info">
-        <h4>Valid Inputs:</h4>
-        <ul>
-            <li><b>Towns:</b> Belfast, Dublin, Cork</li>
-            <li><b>Diagnoses:</b> Diabetes, Hypertension, Healthy</li>
-            <li><b>Epsilon (ε):</b> Between 0.01 and 1.0 (smaller = more private, more noise)</li>
-        </ul>
-    </div>
-
-<script>
-function updateNoiseLabel(val) {
-    val = parseFloat(val).toFixed(2);
-    document.getElementById("epsilon_value").textContent = val;
-    document.querySelector('input[name="epsilon_avg"]').value = val;
-    document.querySelector('input[name="epsilon_count"]').value = val;
-
-    fetch(`/noisy_data?epsilon=${val}`)
-        .then(res => res.json())
-        .then(data => {
-            const table = document.querySelector("#sample_table tbody");
-            table.innerHTML = "";
-            data.forEach(row => {
-                const tr = document.createElement("tr");
-                row.forEach(cell => {
-                    const td = document.createElement("td");
-                    td.textContent = cell;
-                    tr.appendChild(td);
-                });
-                table.appendChild(tr);
-            });
-        });
-}
-</script>
-</body>
-</html>
-"""
 
 @app.route('/regenerate', methods=['GET'])
 def regenerate():
@@ -334,14 +172,16 @@ def index():
                 'std_age': '-',
                 'remaining': round(dp_engine.remaining_budget, 2)
             }
+        
+    locations = data[['forename', 'town', 'town_lat', 'town_lon']].head(10).to_dict(orient='records')
 
-    return render_template_string(
-        HTML_FORM,
-        results=results,
+    return render_template('index.html', results=results,
         sample_data=data,
         raw_filtered=filtered_data if filtered_data is not None else None,
-        dp_filtered=noisy_data if noisy_data is not None else None
+        dp_filtered=noisy_data if noisy_data is not None else None, 
+        locations=locations
     )
+
 
 @app.route('/noisy_data')
 def noisy_data():
