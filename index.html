@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Differential Privacy Demo</title>
+    <style>
+        .info {
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+        }
+        .summary-section {
+            display: flex;
+            gap: 60px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .summary-section ul {
+            margin-top: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 6px 10px;
+            border: 1px solid #aaa;
+            font-family: monospace;
+            font-size: 14px;
+        }
+    </style> 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+</head>
+
+<script>
+function updateNoiseLabel(val) {
+    val = parseFloat(val).toFixed(2);
+    document.getElementById("epsilon_value").textContent = val;
+    document.querySelector('input[name="epsilon_avg"]').value = val;
+    document.querySelector('input[name="epsilon_count"]').value = val;
+}
+</script>
+
+<body>
+    <h2>DP Query Interface</h2>
+    <form method="post">
+        Town: <input type="text" name="town"><br>
+        Diagnosis: <input type="text" name="diagnosis"><br>
+        Epsilon for Count: <input type="number" step="0.01" name="epsilon_count"><br>
+        Epsilon for Average Age: <input type="number" step="0.01" name="epsilon_avg"><br>
+        # <input type="number" step="0.01" name="epsilon_count" value="0.5"><br>
+        # <input type="number" step="0.01" name="epsilon_avg" value="0.5"><br>
+
+        <input type="submit" value="Submit">
+    </form>
+
+    {% if results %}
+    <div class="info">
+      <h3>Query Summary</h3>
+      <div class="summary-section">
+        <div>
+          <p><b>Inputs:</b></p>
+          <ul>
+            <li>Town: <code>{{ results['town'] }}</code></li>
+            <li>Diagnosis: <code>{{ results['diagnosis'] }}</code></li>
+            <li>Epsilon (Count): <code>{{ results['epsilon_count'] }}</code></li>
+            <li>Epsilon (Average): <code>{{ results['epsilon_avg'] }}</code></li>
+          </ul>
+        </div>
+        <div>
+          <p><b>Outputs:</b></p>
+          <ul>
+            <li>DP Count: <code>{{ results['count'] }}</code></li>
+            <li>DP Avg Age: <code>{{ results['avg_age'] }}</code></li>
+            <li>DP Min Age: <code>{{ results['min_age'] }}</code></li>
+            <li>DP Max Age: <code>{{ results['max_age'] }}</code></li>
+            <li>DP Std Dev: <code>{{ results['std_age'] }}</code></li>
+            <li>Remaining Budget: <code>{{ results['remaining'] }}</code></li>
+          </ul>
+        </div>
+      </div>
+      {% if results['remaining'] == 0.0 %}
+      <form method="get" action="/reset">
+          <button type="submit">Reset Privacy Budget</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if sample_data is not none %}
+    <div class="info">
+      <h3>Sample Patient Dataset (First 10 Rows)</h3>
+      <table id="sample_table">
+     <thead>
+        <tr>
+        {% for col in sample_data.columns %}
+            <th>{{ col }}</th>
+        {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in sample_data.values[:10] %}
+        <tr>
+        {% for item in row %}
+            <td>{{ item }}</td>
+        {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+
+    <!-- Add existing Scaler value -->
+    </table>
+    <div class="info">
+        <h3>Noise Scale Visualization</h3>
+        <p>As epsilon (ε) increases, results become <b>less private</b> but <b>more accurate</b>.</p>
+        
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <label for="epsilon_slider"><b>ε value:</b></label>
+            <input type="range" id="epsilon_slider" min="0.01" max="1.0" step="0.01" value="0.5"
+                oninput="updateNoiseLabel(this.value)">
+            <span id="epsilon_value">0.5</span>
+        </div>
+        <div style="margin-top: 10px; display: flex; justify-content: space-between; font-size: 14px;">
+            <span>High Privacy</span>
+            <span>Balanced</span>
+            <span>Low Privacy</span>
+        </div>
+    </div>
+
+    <div class="info">
+    <h3>Map of Patient Locations</h3>
+    <div id="map" style="height: 400px;"></div>
+    </div>
+
+
+    </div>
+    {% endif %}
+
+
+
+    <div class="info">
+        <h4>What is Epsilon (ε)?</h4>
+        <p>Epsilon controls how much random noise is added to your query. Lower values mean stronger privacy but more noisy results.</p>
+        <ul>
+            <li><b>ε = 0.1:</b> Very private, very noisy</li>
+            <li><b>ε = 1.0:</b> Balanced privacy and accuracy</li>
+            <li><b>ε = 3.0:</b> Less private, more accurate</li>
+        </ul>
+        <p>Try comparing the same query with ε = 0.1 and ε = 1.0 to see the effect.</p>
+    </div>
+
+    <div class="info">
+        <h4>Valid Inputs:</h4>
+        <ul>
+            <li><b>Towns:</b> Belfast, Dublin, Cork</li>
+            <li><b>Diagnoses:</b> Diabetes, Hypertension, Healthy</li>
+            <li><b>Epsilon (ε):</b> Between 0.01 and 1.0 (smaller = more private, more noise)</li>
+        </ul>
+    </div>
+
+<script>
+function updateNoiseLabel(val) {
+    val = parseFloat(val).toFixed(2);
+    document.getElementById("epsilon_value").textContent = val;
+    document.querySelector('input[name="epsilon_avg"]').value = val;
+    document.querySelector('input[name="epsilon_count"]').value = val;
+
+    fetch(`/noisy_data?epsilon=${val}`)
+        .then(res => res.json())
+        .then(data => {
+            const table = document.querySelector("#sample_table tbody");
+            table.innerHTML = "";
+            data.forEach(row => {
+                const tr = document.createElement("tr");
+                row.forEach(cell => {
+                    const td = document.createElement("td");
+                    td.textContent = cell;
+                    tr.appendChild(td);
+                });
+                table.appendChild(tr);
+            });
+        });
+}
+// <!-- </script>
+//     <script>
+//     const locations = {{ locations | tojson }};
+//     const map = L.map('map').setView([53.5, -7.6], 6);  // Rough center of Ireland
+
+//     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+//         attribution: '© OpenStreetMap contributors'
+//     }).addTo(map);
+
+//     locations.forEach(loc => {
+//         L.marker([loc.town_lat, loc.town_lon])
+//         .addTo(map)
+//         .bindPopup(`<b>${loc.forename}</b><br>${loc.town}`);
+//     });
+//     </script>
+
+</html>
