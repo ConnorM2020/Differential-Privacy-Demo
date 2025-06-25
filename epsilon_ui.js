@@ -13,11 +13,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const val = parseFloat(epsilonInput.value);
     let message = "";
     if (val < 0.2) {
-      message = "🔒 Very private, but high noise";
+      message = "Very private, but high noise";
     } else if (val < 1.0) {
-      message = "⚖️ Balanced privacy and accuracy";
+      message = "Balanced privacy and accuracy";
     } else if (val >= 1.0) {
-      message = "🔓 More accurate, but weaker privacy";
+      message = "More accurate, but weaker privacy";
     } else {
       message = "";
     }
