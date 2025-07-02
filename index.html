@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -82,6 +81,7 @@ function updateNoiseLabel(val) {
           </ul>
         </div>
       </div>
+
       {% if results['remaining'] == 0.0 %}
       <form method="get" action="/reset">
           <button type="submit">Reset Privacy Budget</button>
@@ -90,55 +90,52 @@ function updateNoiseLabel(val) {
     </div>
     {% endif %}
 
+   <!-- Map Section -->
     {% if sample_data is not none %}
     <div class="info">
-      <h3>Sample Patient Dataset (First 10 Rows)</h3>
-      <table id="sample_table">
-     <thead>
+    <h3>Sample Patient Dataset (First 10 Rows)</h3>
+    <table id="sample_table">
+        <thead>
         <tr>
-        {% for col in sample_data.columns %}
+            {% for col in sample_data.columns %}
             <th>{{ col }}</th>
-        {% endfor %}
+            {% endfor %}
         </tr>
-    </thead>
-    <tbody>
-        {% for row in sample_data.values[:10] %}
+        </thead>
+        <tbody>
+        {% for _, row in sample_data.head(10).iterrows() %}
         <tr>
-        {% for item in row %}
-            <td>{{ item }}</td>
-        {% endfor %}
+            {% for col in sample_data.columns %}
+            <td>{{ row[col] }}</td>
+            {% endfor %}
         </tr>
         {% endfor %}
-    </tbody>
-
-    <!-- Add existing Scaler value -->
+        </tbody>
     </table>
+
     <div class="info">
         <h3>Noise Scale Visualization</h3>
         <p>As epsilon (ε) increases, results become <b>less private</b> but <b>more accurate</b>.</p>
         
         <div style="display: flex; align-items: center; gap: 15px;">
-            <label for="epsilon_slider"><b>ε value:</b></label>
-            <input type="range" id="epsilon_slider" min="0.01" max="1.0" step="0.01" value="0.5"
-                oninput="updateNoiseLabel(this.value)">
-            <span id="epsilon_value">0.5</span>
+        <label for="epsilon_slider"><b>ε value:</b></label>
+        <input type="range" id="epsilon_slider" min="0.01" max="1.0" step="0.01" value="0.5"
+            oninput="updateNoiseLabel(this.value)">
+        <span id="epsilon_value">0.5</span>
         </div>
         <div style="margin-top: 10px; display: flex; justify-content: space-between; font-size: 14px;">
-            <span>High Privacy</span>
-            <span>Balanced</span>
-            <span>Low Privacy</span>
+        <span>High Privacy</span>
+        <span>Balanced</span>
+        <span>Low Privacy</span>
         </div>
     </div>
 
     <div class="info">
-    <h3>Map of Patient Locations</h3>
-    <div id="map" style="height: 400px;"></div>
+        <h3>Map of Patient Locations</h3>
+        <div id="map" style="height: 400px;"></div>
     </div>
-
-
     </div>
     {% endif %}
-
 
 
     <div class="info">
@@ -161,7 +158,10 @@ function updateNoiseLabel(val) {
         </ul>
     </div>
 
+
 <script>
+let map, markerLayer;
+
 function updateNoiseLabel(val) {
     val = parseFloat(val).toFixed(2);
     document.getElementById("epsilon_value").textContent = val;
@@ -171,33 +171,84 @@ function updateNoiseLabel(val) {
     fetch(`/noisy_data?epsilon=${val}`)
         .then(res => res.json())
         .then(data => {
+            const columns = data.columns;
+            const records = data.records;
+
+            // Update table
             const table = document.querySelector("#sample_table tbody");
             table.innerHTML = "";
-            data.forEach(row => {
+
+            records.forEach(row => {
                 const tr = document.createElement("tr");
-                row.forEach(cell => {
+                columns.forEach(col => {
                     const td = document.createElement("td");
-                    td.textContent = cell;
+                    td.textContent = row[col];
                     tr.appendChild(td);
                 });
                 table.appendChild(tr);
             });
+
+            // Update map
+            if (markerLayer) {
+                markerLayer.clearLayers();
+            } else {
+                markerLayer = L.layerGroup().addTo(map);
+            }
+
+            records.forEach(loc => {
+                if (loc.town_lat && loc.town_lon) {
+                    const popupHtml = `
+                        <b>${loc.forename} ${loc.surname}</b><br>
+                        Age: ${loc.age}<br>
+                        Gender: ${loc.gender}<br>
+                        Town: ${loc.town}<br>
+                        Diagnosis: ${loc.diagnosis}<br>
+                        Email: <a href="mailto:${loc.email}">${loc.email}</a><br>
+                        Phone: ${loc.phone_number}<br>
+                        Address: ${loc.address}
+                    `;
+                    L.marker([loc.town_lat, loc.town_lon])
+                        .bindPopup(popupHtml)
+                        .addTo(markerLayer);
+                }
+            });
         });
 }
-// <!-- </script>
-//     <script>
-//     const locations = {{ locations | tojson }};
-//     const map = L.map('map').setView([53.5, -7.6], 6);  // Rough center of Ireland
 
-//     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-//         attribution: '© OpenStreetMap contributors'
-//     }).addTo(map);
+</script>
+    {% if patient_coords %}
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        map = L.map('map').setView([53.5, -7.6], 6);
 
-//     locations.forEach(loc => {
-//         L.marker([loc.town_lat, loc.town_lon])
-//         .addTo(map)
-//         .bindPopup(`<b>${loc.forename}</b><br>${loc.town}`);
-//     });
-//     </script>
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
 
+        const patientCoords = {{ patient_coords | tojson | safe }};
+        markerLayer = L.layerGroup().addTo(map);
+        patientCoords.forEach(loc => {
+            if (loc.town_lat && loc.town_lon) {
+                L.marker([loc.town_lat, loc.town_lon])
+                    .bindPopup(`
+                        <b>${loc.forename} ${loc.surname}</b><br>
+                        Age: ${loc.age}<br>
+                        Gender: ${loc.gender}<br>
+                        Town: ${loc.town}<br>
+                        Diagnosis: ${loc.diagnosis}<br>
+                        Email: <a href="mailto:${loc.email}">${loc.email}</a><br>
+                        Phone: ${loc.phone_number}<br>
+                        Address: ${loc.address}
+                    `)
+                    .addTo(markerLayer);
+            }
+        });
+    });
+    </script>
+    {% endif %}
+
+    <!-- Always place the endif - after the \script -->
+
+</body>
 </html>
+

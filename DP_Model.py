@@ -51,8 +51,6 @@ def generate_synthetic_patient_data(n=100, seed=None):
 
 data = generate_synthetic_patient_data(n=100, seed=42)  # Optional seed for reproducibility
 
-
-
 # ---------------------------
 # Laplace Mechanism
 # ---------------------------
@@ -105,8 +103,7 @@ class DPEngine:
         self._use_budget(epsilon)
         std_dev = values.std()
         return add_laplace_noise(std_dev, epsilon, sensitivity=10)
-
-
+    
 # ---------------------------
 # Flask Web App
 # ---------------------------
@@ -172,23 +169,34 @@ def index():
                 'std_age': '-',
                 'remaining': round(dp_engine.remaining_budget, 2)
             }
-        
-    locations = data[['forename', 'town', 'town_lat', 'town_lon']].head(10).to_dict(orient='records')
-
+    
+    # Backend sending full data to front end HTML
+    patient_coords = data[['forename', 'surname', 'age', 'gender', 'town', 'town_lat', 'town_lon', 'diagnosis', 'email', 'phone_number', 'address']].head(10).to_dict(orient='records')
     return render_template('index.html', results=results,
         sample_data=data,
         raw_filtered=filtered_data if filtered_data is not None else None,
         dp_filtered=noisy_data if noisy_data is not None else None, 
-        locations=locations
+        patient_coords=patient_coords
     )
-
 
 @app.route('/noisy_data')
 def noisy_data():
     epsilon = float(request.args.get('epsilon', 0.5))
     noisy_df = data.copy()
+
+    # Add DP noise to age
     noisy_df['age'] = noisy_df['age'].apply(lambda x: round(add_laplace_noise(x, epsilon, sensitivity=50), 2))
-    return jsonify(noisy_df.head(10).values.tolist())
+
+    selected_fields = [
+        'forename', 'surname', 'age', 'gender', 'town',
+        'town_lat', 'town_lon', 'diagnosis', 'address', 'email', 'phone_number'
+    ]
+
+    return jsonify({
+        'columns': selected_fields,
+        'records': noisy_df[selected_fields].head(10).to_dict(orient='records')
+    })
+
 
 @app.route('/reset', methods=['GET'])
 def reset():
