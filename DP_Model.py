@@ -1,4 +1,6 @@
 # DP_Model.py
+# This would rerun your actual Flask app
+import DP_Model
 
 import numpy as np
 import pandas as pd
@@ -10,10 +12,31 @@ from faker import Faker
 
 
 TOWN_COORDS = {
+    # Ireland
     'Belfast': (54.5973, -5.9301),
     'Dublin': (53.3498, -6.2603),
     'Cork': (51.8985, -8.4756),
+    'Limerick': (52.6640, -8.6231),
+    'Galway': (53.2707, -9.0568),
+    'Waterford': (52.2593, -7.1101),
+    'Drogheda': (53.7179, -6.3561),
+    'Dundalk': (54.0000, -6.4167),
+    'Kilkenny': (52.6541, -7.2448),
+    'Sligo': (54.2766, -8.4761),
+
+    # UK
+    'London': (51.5074, -0.1278),
+    'Manchester': (53.4808, -2.2426),
+    'Birmingham': (52.4862, -1.8904),
+    'Glasgow': (55.8642, -4.2518),
+    'Liverpool': (53.4084, -2.9916),
+    'Leeds': (53.8008, -1.5491),
+    'Sheffield': (53.3811, -1.4701),
+    'Newcastle': (54.9784, -1.6174),
+    'Cardiff': (51.4816, -3.1791),
+    'Bristol': (51.4545, -2.5879)
 }
+
 
 # ---------------------------
 # Synthetic Dataset
@@ -171,9 +194,10 @@ def index():
             }
     
     # Backend sending full data to front end HTML
-    patient_coords = data[['forename', 'surname', 'age', 'gender', 'town', 'town_lat', 'town_lon', 'diagnosis', 'email', 'phone_number', 'address']].head(10).to_dict(orient='records')
+    patient_coords = data.iloc[::-1].head(10)[['forename', 'surname', 'age', 'gender', 'town', 'town_lat', 'town_lon', 'diagnosis', 'email', 'phone_number', 'address']].to_dict(orient='records')
+
     return render_template('index.html', results=results,
-        sample_data=data,
+        sample_data=data.iloc[::-1].reset_index(drop=True),
         raw_filtered=filtered_data if filtered_data is not None else None,
         dp_filtered=noisy_data if noisy_data is not None else None, 
         patient_coords=patient_coords
@@ -196,6 +220,55 @@ def noisy_data():
         'columns': selected_fields,
         'records': noisy_df[selected_fields].head(10).to_dict(orient='records')
     })
+
+
+# Allow new users to be created and added to the system. 
+@app.route('/signup', methods=['POST'])
+def signup():
+    forename = request.form['forename']
+    surname = request.form['surname']
+    age = float(request.form['age'])
+    gender = request.form['gender']
+    town = request.form['town']
+    diagnosis = request.form['diagnosis']
+    email = request.form['email']
+    phone = request.form['phone']
+    address = request.form['address']
+    epsilon = float(request.form['epsilon_signup'])
+    privacy_level = request.form['privacy_level']
+
+    # Noise sensitivity settings based on user privacy level
+    privacy_sensitivity = {
+        'high': 0.08,
+        'medium': 0.04,
+        'low': 0.01
+    }
+    coord_sensitivity = privacy_sensitivity.get(privacy_level, 0.04)
+
+    noisy_age = round(add_laplace_noise(age, epsilon, sensitivity=50), 2)
+    base_lat, base_lon = TOWN_COORDS.get(town, (None, None))
+    noisy_lat = round(add_laplace_noise(base_lat, epsilon, coord_sensitivity), 5)
+    noisy_lon = round(add_laplace_noise(base_lon, epsilon, coord_sensitivity), 5)
+
+    new_row = {
+        'forename': forename,
+        'surname': surname,
+        'age': noisy_age,
+        'gender': gender,
+        'town': town,
+        'town_lat': noisy_lat,
+        'town_lon': noisy_lon,
+        'diagnosis': diagnosis,
+        'address': address,
+        'email': email,
+        'phone_number': phone
+    }
+
+    global data
+    data = pd.concat([data, pd.DataFrame([new_row])], ignore_index=True)
+    return redirect(url_for('index'))
+
+
 
 
 @app.route('/reset', methods=['GET'])

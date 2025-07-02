@@ -90,6 +90,46 @@ function updateNoiseLabel(val) {
     </div>
     {% endif %}
 
+    <!-- Sign Up form -->
+    <form method="POST" action="/signup">
+        <h4>Patient Sign Up</h4>
+        Forename: <input type="text" name="forename"><br>
+        Surname: <input type="text" name="surname"><br>
+        Age: <input type="number" name="age"><br>
+        Gender:
+        
+        <select name="gender">
+            <option>Male</option>
+            <option>Female</option>
+        </select><br>
+
+        Town:
+        <select name="town">
+            <option>Belfast</option>
+            <option>Dublin</option>
+            <option>Cork</option>
+        </select><br>
+        Diagnosis: <input type="text" name="diagnosis"><br>
+        Email: <input type="email" name="email"><br>
+        Phone: <input type="text" name="phone"><br>
+        Address: <input type="text" name="address"><br>
+        <!-- This is what was missing -->
+        Epsilon: <input type="number" name="epsilon_signup" step="0.01" value="0.5"><br>
+        <input type="submit" value="Sign Up">
+
+        Privacy Level:
+        <select name="privacy_level">
+        <option value="high">High (More Noise)</option>
+        <option value="medium" selected>Medium</option>
+        <option value="low">Low (Less Noise)</option>
+    </select><br>
+
+    </form>
+    </div>
+
+
+
+
    <!-- Map Section -->
     {% if sample_data is not none %}
     <div class="info">
@@ -160,6 +200,9 @@ function updateNoiseLabel(val) {
 
 
 <script>
+
+
+
 let map, markerLayer;
 
 function updateNoiseLabel(val) {
