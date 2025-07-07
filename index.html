@@ -118,18 +118,14 @@ function updateNoiseLabel(val) {
         <input type="submit" value="Sign Up">
 
         Privacy Level:
-        <select name="privacy_level">
+    <select name="privacy_level" id="privacy_level" onchange="setEpsilonFromPrivacy(this.value)">
         <option value="high">High (More Noise)</option>
         <option value="medium" selected>Medium</option>
         <option value="low">Low (Less Noise)</option>
     </select><br>
-
     </form>
+
     </div>
-
-
-
-
    <!-- Map Section -->
     {% if sample_data is not none %}
     <div class="info">
@@ -151,12 +147,32 @@ function updateNoiseLabel(val) {
         </tr>
         {% endfor %}
         </tbody>
+
+    <script>
+    function setEpsilonFromPrivacy(level) {
+        let epsilon;
+        switch(level) {
+            case "high":    epsilon = 0.1; break;
+            case "medium":  epsilon = 0.5; break;
+            case "low":     epsilon = 1.0; break;
+        }
+        document.getElementById("epsilon_slider").value = epsilon;
+        updateNoiseLabel(epsilon);
+    }
+
+    // Sync dropdown when slider is used manually
+    function updatePrivacyLevelDropdown(val) {
+        const select = document.getElementById("privacy_level");
+        if (val <= 0.15) select.value = "high";
+        else if (val >= 0.85) select.value = "low";
+        else select.value = "medium";
+    }
+    </script>
     </table>
 
     <div class="info">
         <h3>Noise Scale Visualization</h3>
         <p>As epsilon (ε) increases, results become <b>less private</b> but <b>more accurate</b>.</p>
-        
         <div style="display: flex; align-items: center; gap: 15px;">
         <label for="epsilon_slider"><b>ε value:</b></label>
         <input type="range" id="epsilon_slider" min="0.01" max="1.0" step="0.01" value="0.5"
@@ -171,12 +187,27 @@ function updateNoiseLabel(val) {
     </div>
 
     <div class="info">
+        <h3>Location Privacy Scale</h3>
+        <p>More noise = more location privacy (randomized position).</p>
+        
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <label for="location_slider"><b>Location ε:</b></label>
+            <input type="range" id="location_slider" min="0.01" max="1.0" step="0.01" value="0.5"
+                oninput="updateLocationNoise(this.value)">
+            <span id="location_epsilon_value">0.5</span>
+        </div>
+        <div style="margin-top: 10px; display: flex; justify-content: space-between; font-size: 14px;">
+            <span>High Privacy</span>
+            <span>Balanced</span>
+            <span>Low Privacy</span>
+        </div>
+
+    <div class="info">
         <h3>Map of Patient Locations</h3>
         <div id="map" style="height: 400px;"></div>
     </div>
     </div>
     {% endif %}
-
 
     <div class="info">
         <h4>What is Epsilon (ε)?</h4>
@@ -198,18 +229,14 @@ function updateNoiseLabel(val) {
         </ul>
     </div>
 
-
 <script>
-
-
-
 let map, markerLayer;
-
+let locationEpsilon = 0.5;
 function updateNoiseLabel(val) {
     val = parseFloat(val).toFixed(2);
     document.getElementById("epsilon_value").textContent = val;
     document.querySelector('input[name="epsilon_avg"]').value = val;
-    document.querySelector('input[name="epsilon_count"]').value = val;
+    document.querySelector('input[name="epsilon_count"]').value = val
 
     fetch(`/noisy_data?epsilon=${val}`)
         .then(res => res.json())
@@ -258,6 +285,87 @@ function updateNoiseLabel(val) {
         });
 }
 
+function updateLocationNoise(val) {
+    locationEpsilon = parseFloat(val).toFixed(2);
+    document.getElementById("location_epsilon_value").textContent = locationEpsilon;
+
+    fetch(`/noisy_location_data?loc_epsilon=${locationEpsilon}`)
+        .then(res => res.json())
+        .then(data => {
+            const records = data.records;
+
+            // Just update map markers — skip table update
+            if (markerLayer) {
+                markerLayer.clearLayers();
+            } else {
+                markerLayer = L.layerGroup().addTo(map);
+            }
+
+            records.forEach(loc => {
+                if (loc.town_lat && loc.town_lon) {
+                    const popupHtml = `
+                        <b>${loc.forename} ${loc.surname}</b><br>
+                        Age: ${loc.age}<br>
+                        Gender: ${loc.gender}<br>
+                        Town: ${loc.town}<br>
+                        Diagnosis: ${loc.diagnosis}<br>
+                        Email: <a href="mailto:${loc.email}">${loc.email}</a><br>
+                        Phone: ${loc.phone_number}<br>
+                        Address: ${loc.address}
+                    `;
+                    L.marker([loc.town_lat, loc.town_lon])
+                        .bindPopup(popupHtml)
+                        .addTo(markerLayer);
+                }
+            });
+        });
+}
+
+
+function renderTableAndMap(data) {
+    const table = document.querySelector("#sample_table tbody");
+    const columns = data.columns;
+    const records = data.records;
+    table.innerHTML = "";
+
+    records.forEach(row => {
+        const tr = document.createElement("tr");
+        columns.forEach(col => {
+            const td = document.createElement("td");
+            td.textContent = row[col];
+            tr.appendChild(td);
+        });
+        table.appendChild(tr);
+    });
+
+    if (markerLayer) {
+        markerLayer.clearLayers();
+    } else {
+        markerLayer = L.layerGroup().addTo(map);
+    }
+
+    records.forEach(loc => {
+        if (loc.town_lat && loc.town_lon) {
+            const popupHtml = `
+                <b>${loc.forename} ${loc.surname}</b><br>
+                Age: ${loc.age}<br>
+                Gender: ${loc.gender}<br>
+                Town: ${loc.town}<br>
+                Diagnosis: ${loc.diagnosis}<br>
+                Email: <a href="mailto:${loc.email}">${loc.email}</a><br>
+                Phone: ${loc.phone_number}<br>
+                Address: ${loc.address}
+            `;
+            L.marker([loc.town_lat, loc.town_lon])
+                .bindPopup(popupHtml)
+                .addTo(markerLayer);
+        }
+    });
+}
+
+
+
+
 </script>
     {% if patient_coords %}
     <script>
@@ -287,6 +395,8 @@ function updateNoiseLabel(val) {
             }
         });
     });
+    updateNoiseLabel(document.getElementById("epsilon_slider").value);
+    updateLocationNoise(document.getElementById("location_slider").value);
     </script>
     {% endif %}
 
