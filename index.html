@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html>
+<<<<<<< HEAD
+
+<head>
+
+    <title>Differential Privacy Demo</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+        }
+
+        header {
+            background-color: #000;
+            color: #ff3c3c;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .container-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-auto-rows: auto;
+            gap: 20px;
+            padding: 20px;
+            max-width: 95vw;
+            margin: auto;
+        }
+
+        .box {
+            background: #ffffff;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            overflow: auto;
+            min-height: 250px;
+        }
+
+        /* Geometric Map for Individuals  */
+        #map {
+            height: 800px;
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+
+
+        .box-full {
+            grid-column: span 2;
+        }
+
+        table {
+            width: 100%;
+            font-size: 12px;
+            table-layout: fixed;
+            word-wrap: break-word;
+        }
+
+        th,
+        td {
+            padding: 6px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            width: 200px;
+        }
+
+        @media (max-width: 1000px) {
+            .container-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .box-full {
+                grid-column: span 1;
+            }
+        }
+
+=======
+<head>
+    <title>Differential Privacy Demo</title>
+    <style>
+>>>>>>> 9e3c9043c787f60fe44f3f94dfa7bb9e010db566
+        .info {
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+        }
+<<<<<<< HEAD
+
+=======
+>>>>>>> 9e3c9043c787f60fe44f3f94dfa7bb9e010db566
+        .summary-section {
+            display: flex;
+            gap: 60px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+<<<<<<< HEAD
+
+        .summary-section ul {
+            margin-top: 0;
+        }
+
+        th,
+        td {
+            padding: 4px 6px;
+            /* Less padding */
+            border: 1px solid #ccc;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Modal background overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Modal About content */
+        .modal-content {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            width: 70vw;
+            /* wider modal box (e.g. 70% of viewport width) */
+            max-height: 70vh;
+            /* limit height to 70% of viewport height */
+            overflow-y: auto;
+            /* enable vertical scrolling if content overflows */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .close-btn {
+            float: right;
+            cursor: pointer;
+            color: red;
+            font-size: 18px;
+        }
+
+        .open-modal-btn {
+            margin: 15px;
+            padding: 10px 20px;
+            background-color: #ff3c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .topbar {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 2000;
+        }
+
+        .dots-btn {
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: white;
+            padding: 6px 10px;
+            background-color: #222;
+            border-radius: 5px;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 40px;
+            left: 0;
+            background-color: #fff;
+            min-width: 160px;
+            border: 1px solid #ccc;
+            z-index: 3000;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .dropdown-content a {
+            color: black;
+            padding: 10px 14px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #f2f2f2;
+        }
+
+        /* Showcase results of vulnerable users at risk */
+        #attack_result table {
+            width: 100%;
+            margin-top: 10px;
+            border-collapse: collapse;
+        }
+        /* Showcase results of vulnerable users at risk */
+        #attack_result th,
+        #attack_result td {
+            padding: 6px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+    </style>
+
+    <script>
+        // Functions for the Query selection - including topbar ABOUT  and toggle button 
+        function toggleModal(show) {
+            document.getElementById("queryModal").style.display = show ? "flex" : "none";
+        }
+        // About function
+        function toggleAbout(show) {
+            document.getElementById("aboutModal").style.display = show ? "flex" : "none";
+        }
+
+        // Dismissal button for the query search and about - clicking outside will close the box. 
+        window.addEventListener("click", function (e) {
+            const modal = document.getElementById("queryModal");
+            if (e.target === modal) {
+                modal.style.display = "none";
+            }
+        });
+        window.addEventListener("click", function (e) {
+            const aboutModal = document.getElementById("aboutModal");
+            if (e.target === aboutModal) {
+                aboutModal.style.display = "none";
+            }
+        });
+
+
+
+        function toggleMenu() {
+            const menu = document.getElementById("dropdownMenu");
+            menu.style.display = (menu.style.display === "block") ? "none" : "block";
+        }
+
+        window.onclick = function (event) {
+            const menu = document.getElementById("dropdownMenu");
+            const btn = document.querySelector(".dots-btn");
+
+            if (!menu.contains(event.target) && event.target !== btn) {
+                menu.style.display = "none";
+            }
+        };
+
+    </script>
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Add Charts.js -->
+
+</head>
+
+<body>
+    <header>Differential Privacy Dashboard</header>
+    <div class="topbar">
+        <button class="dots-btn" onclick="toggleMenu()">⋮</button>
+        <div id="dropdownMenu" class="dropdown-content">
+            <a href="#" onclick="toggleModal(true)">Query Patient Data</a>
+            <a href="#" onclick="toggleAttackSim(true)">Simulate Attack</a>
+            <a href="#" onclick="toggleAbout(true)">About</a>
+        </div>
+    </div>
+
+    <div class="container-grid">
+        <!-- Box 1: Query Form -->
+        <!-- Modal for Query Interface -->
+        <div id="queryModal" class="modal-overlay">
+            <div class="modal-content">
+                <span class="close-btn" onclick="toggleModal(false)">✖</span>
+                <h3>DP Query Interface</h3>
+                <form method="post">
+                    Town: <input type="text" name="town"><br>
+                    Diagnosis: <input type="text" name="diagnosis"><br>
+                    Epsilon for Count: <input type="number" step="0.01" name="epsilon_count" value="0.5"><br>
+                    Epsilon for Average Age: <input type="number" step="0.01" name="epsilon_avg" value="0.5"><br>
+                    <br>
+                    <input type="submit" value="Submit">
+                </form>
+            </div>
+        </div>
+
+        <!-- About Modal Definition-->
+        <div id="aboutModal" class="modal-overlay">
+            <div class="modal-content">
+                <span class="close-btn" onclick="toggleAbout(false)" width="100%" height="80">✖</span>
+                <h3>About This Dashboard</h3>
+                <p>
+                    This Differential Privacy Dashboard demonstrates how sensitive personal data can be protected
+                    through the application of noise, while still maintaining utility for statistical insights.
+                </p>
+                <h4>Patient Data Table</h4>
+                <p>
+                    The central table displays anonymised patient data, including attributes such as age, town, health
+                    status, and vital signs. The data has been perturbed using Differential Privacy (DP), making it
+                    difficult to trace back any record to an individual while preserving statistical value.
+                </p>
+                <h4>Accuracy vs Privacy Chart (MAE)</h4>
+                <p>
+                    The chart below visualizes the trade-off between privacy and data accuracy. It plots the
+                    Mean Absolute Error (MAE) as a function of the ε (epsilon) values. A lower epsilon
+                    means higher privacy but greater data distortion; higher epsilon values offer more accuracy but
+                    reduced privacy.
+                </p>
+                <h4>Location Privacy Map</h4>
+                <p>
+                    The map displays randomised patient locations based on geographic noise. These positions are altered
+                    using DP to ensure location privacy. Each blue marker represents a patient, and the position becomes
+                    more randomised (less accurate) as the location ε-value is reduced.
+                </p>
+                <h4>Attribute & Location Sliders</h4>
+                <p>
+                    Two interactive sliders control the ε-values for attribute and location noise:
+                </p>
+                <ul>
+                    <li><strong>ε (Attributes):</strong> Controls the amount of noise added to patient features like age
+                        or diagnosis.</li>
+                    <li><strong>ε (Location):</strong> Adjusts the randomness applied to the latitude and longitude
+                        values for geolocation privacy.</li>
+                </ul>
+                <p>
+                    Use these sliders to observe real-time changes to both the table data and map display, and see how
+                    privacy-preserving mechanisms impact utility.
+                </p>
+                <p><em>Created as part of the PETs Summer Internship (2025) | Built with Flask, Leaflet.js, Chart.js &
+                        HTML/CSS</em></p>
+            </div>
+        </div>
+        <!-- Attack Simulation Modal -->
+        <div id="attackModal" class="modal-overlay">
+            <div class="modal-content" style="display: flex; flex-direction: row; gap: 30px; max-height: 70vh; overflow-y: auto;">
+
+            <!-- LEFT COLUMN: Attack Simulation Form -->
+            <div style="flex: 1;">
+                <span class="close-btn" onclick="toggleAttackSim(false)">✖</span>
+                <h3>Attack Simulation Mode</h3>
+                <p>Simulate a re-identification or membership inference attack to test DP protection.</p>
+
+                <label>Attack Type:</label><br>
+                <select id="attack_type">
+                <option value="reid">Re-identification</option>
+                <option value="membership">Membership Inference</option>
+                </select><br><br>
+
+                <label>Known Age:</label><br>
+                <input type="number" id="known_age" value="45"><br><br>
+
+                <label>Known Town:</label><br>
+                <select id="known_town">
+                <option value="" disabled selected>Loading towns...</option>
+                </select><br><br>
+
+                <label>Known Heart Rate:</label><br>
+                <input type="number" id="known_hr" value="80"><br><br>
+
+                <label>Epsilon (ε):</label><br>
+                <input type="number" step="0.01" id="attack_epsilon" value="0.5"><br><br>
+
+                <button onclick="runAttackSim()" class="open-modal-btn">Run Simulation</button>
+
+                <div id="attack_result" class="info" style="margin-top:20px;"></div>
+                <label for="privacy_slider">Privacy Level (ε):</label><br>
+                <input type="range" id="privacy_slider" min="0.01" max="1.0" step="0.01" value="0.5" oninput="adjustPrivacyVisibility(this.value)">
+                <span id="privacy_level_label" style="margin-left: 8px; padding: 4px 8px; background: #4a4aff; color: white; border-radius: 5px;">Balanced </span>
+                <br><br>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Vulnerable Users Output -->
+            <div style="flex: 1; border-left: 1px solid #ccc; padding-left: 20px;">
+                <h4>⚠️ Vulnerable Users</h4>
+                <div id="vulnerableUsersContainer" class="info" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
+            </div>
+
+        </div>
+
+
+        <!-- Box 2: Wider Data Table -->
+        <div class="box box-full">
+            <h3>Sample Patient Data (First 10 Rows)</h3>
+            <table id="sample_table">
+                <!-- Attribute Noise Slider (top-left for table) -->
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <label for="epsilon-table-slider" style="margin-right: 10px; font-weight: bold;">ε Table
+                        Noise:</label>
+                    <input type="range" id="epsilon-table-slider" min="0.1" max="1.0" step="0.05" value="0.5"
+                        style="width: 200px;">
+                    <span id="epsilon-table-value" style="margin-left: 10px;">More Privacy</span>
+                </div>
+
+
+                <thead>
+                    <tr>
+                        {% for col in sample_data.columns %}
+                        <th>{{ col }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for _, row in sample_data.head(10).iterrows() %}
+                    <tr>
+                        {% for col in sample_data.columns %}
+                        <td>{{ row[col] }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Box 3: Chart on the left -->
+        <div class="box">
+            <h3>Accuracy vs Privacy</h3>
+            <canvas id="accuracyChart" width="100%" height="80"></canvas>
+        </div>
+
+        <!-- Box 4: Map + Sliders on the right -->
+        <div class="box">
+            <h3>Location Privacy & Map</h3>
+            <div id="map"></div>
+
+            <div style="margin-bottom: 10px;">
+                <label for="epsilon_slider">ε (Attributes):</label>
+                <input type="range" id="epsilon_slider" min="0.01" max="1.0" step="0.01" value="0.5"
+                    oninput="updateNoiseLabel(this.value)">
+                <span id="epsilon_value">0.5</span>
+            </div>
+
+            <div>
+                <label for="location_slider">ε (Location):</label>
+                <input type="range" id="location_slider" min="0.01" max="1.0" step="0.01" value="0.5"
+                    oninput="updateLocationNoise(this.value)">
+
+                <span id="location_epsilon_value">0.5</span>
+
+            </div>
+
+        </div>
+
+        <!-- Start of Front end function definitions. -->
+        <script>
+            let map, markerLayer;
+            let locationEpsilon = 0.5;
+            let noisyAttributeData = [];
+            let noisyLocationData = [];
+            let columnHeaders = [];
+
+            let attrReady = false;
+            let locReady = false;
+
+
+            // //////////////////////////
+            // Check for Attack functions 
+            function toggleAttackSim(show) {
+                document.getElementById("attackModal").style.display = show ? "flex" : "none";
+            }
+
+            function runAttackSim() {
+                const type = document.getElementById("attack_type").value;
+                const age = document.getElementById("known_age").value;
+                const town = document.getElementById("known_town").value;
+                const hr = document.getElementById("known_hr").value;
+                const epsilon = parseFloat(document.getElementById("attack_epsilon").value);
+
+                fetch("/simulate_attack", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        attack_type: type,
+                        age: age,
+                        town: town,
+                        heart_rate: hr,
+                        epsilon: epsilon
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    const resultDiv = document.getElementById("attack_result");
+                    resultDiv.innerHTML = "";  // Clear previous content before inserting
+
+                    // Base result
+                    let html = `<strong>Result:</strong> ${data.result}<br><br>`;
+
+                    // If matches exist, show them once
+                    if (data.matched_records && data.matched_records.length > 0) {
+                        html += `<h4>Matching Records (sample):</h4>`;
+                        html += `<table><tr><th>Name</th><th>Age</th><th>Town</th><th>HR</th></tr>`;
+                        const unique = new Set();
+                        data.matched_records.forEach(rec => {
+                            const key = `${rec.forename}-${rec.surname}-${rec.age}-${rec.town}-${rec.heart_rate}`;
+                            if (!unique.has(key)) {
+                                unique.add(key);
+                                html += `<tr><td>${rec.forename} ${rec.surname}</td><td>${rec.age}</td><td>${rec.town}</td><td>${rec.heart_rate}</td></tr>`;
+                            }
+                        });
+                        html += `</table>`;
+                    }
+
+                    resultDiv.innerHTML = html;  // Insert cleaned HTML
+                    const vulnerableDiv = document.getElementById("vulnerableUsersContainer");
+                    vulnerableDiv.innerHTML = "";  // Clear previous content
+
+                    if (data.vulnerable_users && data.vulnerable_users.length > 0) {
+                        let userListHTML = `<h4>⚠️ Vulnerable Users Detected:</h4><table>
+                            <tr><th>Name</th><th>Town</th><th>Age</th><th>Heart Rate</th><th>Status</th></tr>`;
+                        data.vulnerable_users.forEach(user => {
+                            userListHTML += `<tr>
+                                <td>${user.name}</td>
+                                <td>${user.town}</td>
+                                <td>${user.age}</td>
+                                <td>${user.heart_rate}</td>
+                               
+                                <td data-risk="${(user.risk_score ?? 1.0).toFixed(2)}">${user.status}</td>
+                            </tr>`;
+                        });
+                        userListHTML += "</table>";
+                        vulnerableDiv.innerHTML = userListHTML;
+                        adjustPrivacyVisibility(document.getElementById("privacy_slider").value);
+
+                    } else {
+                        vulnerableDiv.innerHTML = `<p>No vulnerable users detected.</p>`;
+                    }
+
+                })
+                .catch(err => {
+                    document.getElementById("attack_result").innerHTML = "Error simulating attack: " + err;
+                });
+            }
+            function adjustPrivacyVisibility(val) {
+                const label = document.getElementById("privacy_level_label");
+                const epsilon = parseFloat(val);
+
+                // Update label
+                if (epsilon < 0.3) {
+                    label.textContent = "More Private";
+                    label.style.backgroundColor = "#008000"; // green
+                } else if (epsilon < 0.7) {
+                    label.textContent = "Balanced";
+                    label.style.backgroundColor = "#4a4aff"; // blue
+                } else {
+                    label.textContent = "Less Private";
+                    label.style.backgroundColor = "#ff4d4d"; // red
+                }
+
+                // Loop over user table rows
+                const rows = document.querySelectorAll("#vulnerableUsersContainer table tr");
+                rows.forEach((row, index) => {
+                    if (index === 0) return; // skip header
+                    const statusCell = row.querySelector("td[data-risk]");
+
+                    if (statusCell) {
+                        const score = parseFloat(statusCell.getAttribute("data-risk"));
+                        console.log("Filtering users with epsilon =", epsilon);
+                        console.log("Risk score for this row:", score);
+                        row.style.display = score >= (1.0 - epsilon) ? "" : "none";
+
+                    }
+                });
+            }
+            async function fetchVulnerableUsersByEpsilon(epsilon) {
+                try {
+                    const res = await fetch(`/vulnerable_users?epsilon=${epsilon}`);
+                    const users = await res.json();
+                    const container = document.getElementById("vulnerableUsersContainer");
+
+                    if (users.length === 0) {
+                        container.innerHTML = "<p>No vulnerable users detected at this level.</p>";
+                        return;
+                    }
+
+                    let html = `<h4>⚠️ Vulnerable Users Detected:</h4><table>
+                        <tr><th>Name</th><th>Town</th><th>Age</th><th>Heart Rate</th><th>Status</th></tr>`;
+
+                    users.forEach(user => {
+                        html += `<tr>
+                            <td>${user.name}</td>
+                            <td>${user.town}</td>
+                            <td>${user.age}</td>
+                            <td>${user.heart_rate}</td>
+                            <td data-risk="${(user.risk_score ?? 1.0).toFixed(2)}">${user.status}</td>
+                        </tr>`;
+                    });
+
+                    html += `</table>`;
+                    container.innerHTML = html;
+                    adjustPrivacyVisibility(epsilon);  // apply filtering based on slider
+                } catch (err) {
+                    console.error("Failed to fetch vulnerable users:", err);
+                }
+            }
+
+            // Hook it to the slider
+            document.getElementById("privacy_slider").addEventListener("input", function () {
+                const epsilon = parseFloat(this.value);
+                fetchVulnerableUsersByEpsilon(epsilon);
+            });
+
+
+            //  Alter noise functions
+            // Fetch and update attribute-based noise (ε for age, etc.)
+            function updateNoiseLabel(val) {
+                val = parseFloat(val).toFixed(2);
+                document.getElementById("epsilon_value").textContent = val;
+                document.querySelector('input[name="epsilon_avg"]').value = val;
+                document.querySelector('input[name="epsilon_count"]').value = val;
+
+                attrReady = false;
+
+                // Fetch original clean data if ε = 1.00
+                const url = (val === "1.00")
+                    ? `/original_data`
+                    : `/noisy_data?epsilon=${val}`;
+
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        noisyAttributeData = data.records;
+                        columnHeaders = data.columns;
+                        attrReady = true;
+                        if (attrReady && locReady) {
+                            mergeAndRender(noisyAttributeData, noisyLocationData, columnHeaders);
+                        }
+                    });
+            }
+
+            // Location nosie function
+            // Fetch and update location noise (ε for coordinates)
+            function updateLocationNoise(val) {
+                locationEpsilon = parseFloat(val).toFixed(2);
+                document.getElementById("location_epsilon_value").textContent = locationEpsilon;
+
+                locReady = false;
+
+                fetch(`/noisy_location_data?loc_epsilon=${locationEpsilon}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        noisyLocationData = data.records;
+                        locReady = true;
+                        if (attrReady && locReady) {
+                            mergeAndRender(noisyAttributeData, noisyLocationData, columnHeaders);
+                        }
+                    });
+
+                // Table Noise Slider (independent of map)
+                document.getElementById("epsilon-table-slider").addEventListener("input", function () {
+                    const epsilon = parseFloat(this.value).toFixed(2);
+                    document.getElementById("epsilon-table-value").textContent = epsilon;
+
+                    fetch(`/noisy_data?epsilon=${epsilon}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            const table = document.querySelector("#sample_table tbody");
+                            const columns = data.columns;
+                            const records = data.records;
+                            table.innerHTML = "";
+
+                            records.forEach(row => {
+                                const tr = document.createElement("tr");
+                                columns.forEach(col => {
+                                    const td = document.createElement("td");
+                                    td.textContent = row[col];
+                                    tr.appendChild(td);
+                                });
+                                table.appendChild(tr);
+                            });
+                        });
+                });
+
+            }
+
+            // Merge and display both noisy datasets
+            function mergeAndRender(attrData, locData, columns) {
+                if (!attrData.length || !locData.length) return;
+
+                const merged = attrData.map((attrRow, i) => {
+                    const locRow = locData[i] || {};
+                    return {
+                        ...attrRow,
+                        town_lat: locRow.town_lat ?? attrRow.town_lat,
+                        town_lon: locRow.town_lon ?? attrRow.town_lon
+                    };
+                });
+
+                renderTableAndMap({ columns, records: merged });
+            }
+
+            // Display merged table and map markers
+            function renderTableAndMap(data) {
+                const table = document.querySelector("#sample_table tbody");
+                const columns = data.columns;
+                const records = data.records;
+                table.innerHTML = "";
+
+                records.forEach(row => {
+                    const tr = document.createElement("tr");
+                    columns.forEach(col => {
+                        const td = document.createElement("td");
+                        td.textContent = row[col];
+                        tr.appendChild(td);
+                    });
+                    table.appendChild(tr);
+                });
+
+                if (markerLayer) {
+                    markerLayer.clearLayers();
+                } else {
+                    markerLayer = L.layerGroup().addTo(map);
+                }
+
+                records.forEach(loc => {
+                    if (loc.town_lat && loc.town_lon) {
+                        const popupHtml = `
+=======
+        .summary-section ul {
+            margin-top: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 6px 10px;
+            border: 1px solid #aaa;
+            font-family: monospace;
+            font-size: 14px;
+        }
+    </style> 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+</head>
+
+<script>
+function updateNoiseLabel(val) {
+    val = parseFloat(val).toFixed(2);
+    document.getElementById("epsilon_value").textContent = val;
+    document.querySelector('input[name="epsilon_avg"]').value = val;
+    document.querySelector('input[name="epsilon_count"]').value = val;
+}
+</script>
+
+<body>
+    <h2>DP Query Interface</h2>
+    <form method="post">
+        Town: <input type="text" name="town"><br>
+        Diagnosis: <input type="text" name="diagnosis"><br>
+        Epsilon for Count: <input type="number" step="0.01" name="epsilon_count"><br>
+        Epsilon for Average Age: <input type="number" step="0.01" name="epsilon_avg"><br>
+        # <input type="number" step="0.01" name="epsilon_count" value="0.5"><br>
+        # <input type="number" step="0.01" name="epsilon_avg" value="0.5"><br>
+
+        <input type="submit" value="Submit">
+    </form>
+
+    {% if results %}
+    <div class="info">
+      <h3>Query Summary</h3>
+      <div class="summary-section">
+        <div>
+          <p><b>Inputs:</b></p>
+          <ul>
+            <li>Town: <code>{{ results['town'] }}</code></li>
+            <li>Diagnosis: <code>{{ results['diagnosis'] }}</code></li>
+            <li>Epsilon (Count): <code>{{ results['epsilon_count'] }}</code></li>
+            <li>Epsilon (Average): <code>{{ results['epsilon_avg'] }}</code></li>
+          </ul>
+        </div>
+        <div>
+          <p><b>Outputs:</b></p>
+          <ul>
+            <li>DP Count: <code>{{ results['count'] }}</code></li>
+            <li>DP Avg Age: <code>{{ results['avg_age'] }}</code></li>
+            <li>DP Min Age: <code>{{ results['min_age'] }}</code></li>
+            <li>DP Max Age: <code>{{ results['max_age'] }}</code></li>
+            <li>DP Std Dev: <code>{{ results['std_age'] }}</code></li>
+            <li>Remaining Budget: <code>{{ results['remaining'] }}</code></li>
+          </ul>
+        </div>
+      </div>
+
+      {% if results['remaining'] == 0.0 %}
+      <form method="get" action="/reset">
+          <button type="submit">Reset Privacy Budget</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Sign Up form -->
+    <form method="POST" action="/signup">
+        <h4>Patient Sign Up</h4>
+        Forename: <input type="text" name="forename"><br>
+        Surname: <input type="text" name="surname"><br>
+        Age: <input type="number" name="age"><br>
+        Gender:
+        
+        <select name="gender">
+            <option>Male</option>
+            <option>Female</option>
+        </select><br>
+
+        Town:
+        <select name="town">
+            <option>Belfast</option>
+            <option>Dublin</option>
+            <option>Cork</option>
+        </select><br>
+        Diagnosis: <input type="text" name="diagnosis"><br>
+        Email: <input type="email" name="email"><br>
+        Phone: <input type="text" name="phone"><br>
+        Address: <input type="text" name="address"><br>
+        <!-- This is what was missing -->
+        Epsilon: <input type="number" name="epsilon_signup" step="0.01" value="0.5"><br>
+        <input type="submit" value="Sign Up">
+
+        Privacy Level:
+    <select name="privacy_level" id="privacy_level" onchange="setEpsilonFromPrivacy(this.value)">
+        <option value="high">High (More Noise)</option>
+        <option value="medium" selected>Medium</option>
+        <option value="low">Low (Less Noise)</option>
+    </select><br>
+    </form>
+
+    </div>
+   <!-- Map Section -->
+    {% if sample_data is not none %}
+    <div class="info">
+    <h3>Sample Patient Dataset (First 10 Rows)</h3>
+    <table id="sample_table">
+        <thead>
+        <tr>
+            {% for col in sample_data.columns %}
+            <th>{{ col }}</th>
+            {% endfor %}
+        </tr>
+        </thead>
+        <tbody>
+        {% for _, row in sample_data.head(10).iterrows() %}
+        <tr>
+            {% for col in sample_data.columns %}
+            <td>{{ row[col] }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+        </tbody>
+
+    <script>
+    function setEpsilonFromPrivacy(level) {
+        let epsilon;
+        switch(level) {
+            case "high":    epsilon = 0.1; break;
+            case "medium":  epsilon = 0.5; break;
+            case "low":     epsilon = 1.0; break;
+        }
+        document.getElementById("epsilon_slider").value = epsilon;
+        updateNoiseLabel(epsilon);
+    }
+
+    // Sync dropdown when slider is used manually
+    function updatePrivacyLevelDropdown(val) {
+        const select = document.getElementById("privacy_level");
+        if (val <= 0.15) select.value = "high";
+        else if (val >= 0.85) select.value = "low";
+        else select.value = "medium";
+    }
+    </script>
+    </table>
+
+    <div class="info">
+        <h3>Noise Scale Visualization</h3>
+        <p>As epsilon (ε) increases, results become <b>less private</b> but <b>more accurate</b>.</p>
+        <div style="display: flex; align-items: center; gap: 15px;">
+        <label for="epsilon_slider"><b>ε value:</b></label>
+        <input type="range" id="epsilon_slider" min="0.01" max="1.0" step="0.01" value="0.5"
+            oninput="updateNoiseLabel(this.value)">
+        <span id="epsilon_value">0.5</span>
+        </div>
+        <div style="margin-top: 10px; display: flex; justify-content: space-between; font-size: 14px;">
+        <span>High Privacy</span>
+        <span>Balanced</span>
+        <span>Low Privacy</span>
+        </div>
+    </div>
+
+    <div class="info">
+        <h3>Location Privacy Scale</h3>
+        <p>More noise = more location privacy (randomized position).</p>
+        
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <label for="location_slider"><b>Location ε:</b></label>
+            <input type="range" id="location_slider" min="0.01" max="1.0" step="0.01" value="0.5"
+                oninput="updateLocationNoise(this.value)">
+            <span id="location_epsilon_value">0.5</span>
+        </div>
+        <div style="margin-top: 10px; display: flex; justify-content: space-between; font-size: 14px;">
+            <span>High Privacy</span>
+            <span>Balanced</span>
+            <span>Low Privacy</span>
+        </div>
+
+    <div class="info">
+        <h3>Map of Patient Locations</h3>
+        <div id="map" style="height: 400px;"></div>
+    </div>
+    </div>
+    {% endif %}
+
+    <div class="info">
+        <h4>What is Epsilon (ε)?</h4>
+        <p>Epsilon controls how much random noise is added to your query. Lower values mean stronger privacy but more noisy results.</p>
+        <ul>
+            <li><b>ε = 0.1:</b> Very private, very noisy</li>
+            <li><b>ε = 1.0:</b> Balanced privacy and accuracy</li>
+            <li><b>ε = 3.0:</b> Less private, more accurate</li>
+        </ul>
+        <p>Try comparing the same query with ε = 0.1 and ε = 1.0 to see the effect.</p>
+    </div>
+
+    <div class="info">
+        <h4>Valid Inputs:</h4>
+        <ul>
+            <li><b>Towns:</b> Belfast, Dublin, Cork</li>
+            <li><b>Diagnoses:</b> Diabetes, Hypertension, Healthy</li>
+            <li><b>Epsilon (ε):</b> Between 0.01 and 1.0 (smaller = more private, more noise)</li>
+        </ul>
+    </div>
+
+<script>
+let map, markerLayer;
+let locationEpsilon = 0.5;
+function updateNoiseLabel(val) {
+    val = parseFloat(val).toFixed(2);
+    document.getElementById("epsilon_value").textContent = val;
+    document.querySelector('input[name="epsilon_avg"]').value = val;
+    document.querySelector('input[name="epsilon_count"]').value = val
+
+    fetch(`/noisy_data?epsilon=${val}`)
+        .then(res => res.json())
+        .then(data => {
+            const columns = data.columns;
+            const records = data.records;
+
+            // Update table
+            const table = document.querySelector("#sample_table tbody");
+            table.innerHTML = "";
+
+            records.forEach(row => {
+                const tr = document.createElement("tr");
+                columns.forEach(col => {
+                    const td = document.createElement("td");
+                    td.textContent = row[col];
+                    tr.appendChild(td);
+                });
+                table.appendChild(tr);
+            });
+
+            // Update map
+            if (markerLayer) {
+                markerLayer.clearLayers();
+            } else {
+                markerLayer = L.layerGroup().addTo(map);
+            }
+
+            records.forEach(loc => {
+                if (loc.town_lat && loc.town_lon) {
+                    const popupHtml = `
+                        <b>${loc.forename} ${loc.surname}</b><br>
+                        Age: ${loc.age}<br>
+                        Gender: ${loc.gender}<br>
+                        Town: ${loc.town}<br>
+                        Diagnosis: ${loc.diagnosis}<br>
+                        Email: <a href="mailto:${loc.email}">${loc.email}</a><br>
+                        Phone: ${loc.phone_number}<br>
+                        Address: ${loc.address}
+                    `;
+                    L.marker([loc.town_lat, loc.town_lon])
+                        .bindPopup(popupHtml)
+                        .addTo(markerLayer);
+                }
+            });
+        });
+}
+
+function updateLocationNoise(val) {
+    locationEpsilon = parseFloat(val).toFixed(2);
+    document.getElementById("location_epsilon_value").textContent = locationEpsilon;
+
+    fetch(`/noisy_location_data?loc_epsilon=${locationEpsilon}`)
+        .then(res => res.json())
+        .then(data => {
+            const records = data.records;
+
+            // Just update map markers — skip table update
+            if (markerLayer) {
+                markerLayer.clearLayers();
+            } else {
+                markerLayer = L.layerGroup().addTo(map);
+            }
+
+            records.forEach(loc => {
+                if (loc.town_lat && loc.town_lon) {
+                    const popupHtml = `
+                        <b>${loc.forename} ${loc.surname}</b><br>
+                        Age: ${loc.age}<br>
+                        Gender: ${loc.gender}<br>
+                        Town: ${loc.town}<br>
+                        Diagnosis: ${loc.diagnosis}<br>
+                        Email: <a href="mailto:${loc.email}">${loc.email}</a><br>
+                        Phone: ${loc.phone_number}<br>
+                        Address: ${loc.address}
+                    `;
+                    L.marker([loc.town_lat, loc.town_lon])
+                        .bindPopup(popupHtml)
+                        .addTo(markerLayer);
+                }
+            });
+        });
+}
+
+
+function renderTableAndMap(data) {
+    const table = document.querySelector("#sample_table tbody");
+    const columns = data.columns;
+    const records = data.records;
+    table.innerHTML = "";
+
+    records.forEach(row => {
+        const tr = document.createElement("tr");
+        columns.forEach(col => {
+            const td = document.createElement("td");
+            td.textContent = row[col];
+            tr.appendChild(td);
+        });
+        table.appendChild(tr);
+    });
+
+    if (markerLayer) {
+        markerLayer.clearLayers();
+    } else {
+        markerLayer = L.layerGroup().addTo(map);
+    }
+
+    records.forEach(loc => {
+        if (loc.town_lat && loc.town_lon) {
+            const popupHtml = `
+>>>>>>> 9e3c9043c787f60fe44f3f94dfa7bb9e010db566
+                <b>${loc.forename} ${loc.surname}</b><br>
+                Age: ${loc.age}<br>
+                Gender: ${loc.gender}<br>
+                Town: ${loc.town}<br>
+                Diagnosis: ${loc.diagnosis}<br>
+                Email: <a href="mailto:${loc.email}">${loc.email}</a><br>
+                Phone: ${loc.phone_number}<br>
+                Address: ${loc.address}
+            `;
+<<<<<<< HEAD
+                        L.marker([loc.town_lat, loc.town_lon])
+                            .bindPopup(popupHtml)
+                            .addTo(markerLayer);
+                    }
+                });
+            }
+
+            // When the page is ready, initialize the map and sliders
+            document.addEventListener("DOMContentLoaded", async function () {
+                map = L.map('map').setView([53.5, -7.6], 6);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
+
+                markerLayer = L.layerGroup().addTo(map);
+
+                const epsilon = document.getElementById("epsilon_slider").value;
+                const locEpsilon = document.getElementById("location_slider").value;
+
+                // Inject target user for simulation
+                try {
+                    await fetch('/inject_target_user');
+
+                    // Pre-fill values for demo purposes
+                    document.getElementById("known_age").value = 64;
+                    document.getElementById("known_hr").value = 86;
+
+                    // Delay + auto-run simulation (optional)
+                    setTimeout(() => {
+                        runAttackSim();
+                    }, 1000);
+                } catch (err) {
+                    console.error("Failed to inject target user:", err);
+                }
+
+                // Fetch noisy data and render
+                updateAttributeNoise(epsilon);
+                updateLocationNoise(locEpsilon);
+            });
+
+        </script>
+        </script>
+
+
+        {% if patient_coords %}
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                map = L.map('map').setView([53.5, -7.6], 6);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
+
+                markerLayer = L.layerGroup().addTo(map);
+
+                // Fetch both datasets and merge
+                const epsilon = document.getElementById("epsilon_slider").value;
+                const locEpsilon = document.getElementById("location_slider").value;
+
+                Promise.all([
+                    fetch(`/noisy_data?epsilon=${epsilon}`).then(res => res.json()),
+                    fetch(`/noisy_location_data?loc_epsilon=${locEpsilon}`).then(res => res.json())
+                ]).then(([attrData, locData]) => {
+                    noisyAttributeData = attrData.records;
+                    noisyLocationData = locData.records;
+                    columnHeaders = attrData.columns;
+                    mergeAndRender(noisyAttributeData, noisyLocationData, columnHeaders);
+                });
+
+                updateNoiseLabel(epsilon);         // for table update
+                updateLocationNoise(locEpsilon);  // for location update
+            });
+
+            updateNoiseLabel(document.getElementById("epsilon_slider").value);
+            updateLocationNoise(document.getElementById("location_slider").value);
+            
+            async function loadAvailableTowns() {
+                try {
+                    const response = await fetch('/available_towns');
+                    const data = await response.json();
+                    const townSelect = document.getElementById('known_town');
+
+                    // Clear and populate dropdown
+                    townSelect.innerHTML = '<option value="" disabled selected>Select town</option>';
+                    data.towns.forEach(town => {
+                        const option = document.createElement('option');
+                        option.value = town;
+                        option.textContent = town;
+                        townSelect.appendChild(option);
+                    });
+                } catch (err) {
+                    console.error('Error loading towns:', err);
+                    const townSelect = document.getElementById('known_town');
+                    townSelect.innerHTML = '<option value="">Error loading towns</option>';
+                }
+            }
+
+            // Load towns once the page loads
+            document.addEventListener('DOMContentLoaded', loadAvailableTowns);
+        </script>
+        {% endif %}
+        <!-- Always place the endif - after the \script -->
+</body>
+
+</html>
+<script>
+    // --- Chart.js Setup for Accuracy MAE ---
+    const accuracyCtx = document.getElementById("accuracyChart").getContext("2d");
+
+    const accuracyChart = new Chart(accuracyCtx, {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: "Age MAE",
+                    borderColor: "blue",
+                    data: [],
+                    fill: false
+                },
+                {
+                    label: "Latitude MAE",
+                    borderColor: "green",
+                    data: [],
+                    fill: false
+                },
+                {
+                    label: "Longitude MAE",
+                    borderColor: "red",
+                    data: [],
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: "bottom"
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Epsilon (ε)'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Mean Absolute Error (MAE)'
+                    }
+                }
+            }
+        }
+    });
+ 
+    // Fetch accuracy and update chart
+    async function updateAccuracyChart(epsilon) {
+        try {
+            const res = await fetch(`/accuracy_metrics?epsilon=${epsilon}`);
+            const result = await res.json();
+
+            const { age_mae, lat_mae, lon_mae } = result;
+
+            // Add epsilon as label only if not already added
+            const label = epsilon.toFixed(2);
+            if (!accuracyChart.data.labels.includes(label)) {
+                accuracyChart.data.labels.push(label);
+                accuracyChart.data.datasets[0].data.push(age_mae);
+                accuracyChart.data.datasets[1].data.push(lat_mae);
+                accuracyChart.data.datasets[2].data.push(lon_mae);
+                accuracyChart.update();
+            }
+        } catch (err) {
+            console.error("Error updating accuracy chart:", err);
+        }
+    }
+
+    // Attach to both sliders
+    document.getElementById("epsilon_slider").addEventListener("input", function () {
+        const epsilon = parseFloat(this.value);
+        updateAccuracyChart(epsilon);
+    });
+
+    document.getElementById("location_slider").addEventListener("input", function () {
+        const epsilon = parseFloat(document.getElementById("epsilon_slider").value);
+        updateAccuracyChart(epsilon);
+    });
+
+    // Initial chart draw
+    updateAccuracyChart(parseFloat(document.getElementById("epsilon_slider").value));
+
+
+</script>
+=======
+            L.marker([loc.town_lat, loc.town_lon])
+                .bindPopup(popupHtml)
+                .addTo(markerLayer);
+        }
+    });
+}
+
+
+
+
+</script>
+    {% if patient_coords %}
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        map = L.map('map').setView([53.5, -7.6], 6);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        const patientCoords = {{ patient_coords | tojson | safe }};
+        markerLayer = L.layerGroup().addTo(map);
+        patientCoords.forEach(loc => {
+            if (loc.town_lat && loc.town_lon) {
+                L.marker([loc.town_lat, loc.town_lon])
+                    .bindPopup(`
+                        <b>${loc.forename} ${loc.surname}</b><br>
+                        Age: ${loc.age}<br>
+                        Gender: ${loc.gender}<br>
+                        Town: ${loc.town}<br>
+                        Diagnosis: ${loc.diagnosis}<br>
+                        Email: <a href="mailto:${loc.email}">${loc.email}</a><br>
+                        Phone: ${loc.phone_number}<br>
+                        Address: ${loc.address}
+                    `)
+                    .addTo(markerLayer);
+            }
+        });
+    });
+    updateNoiseLabel(document.getElementById("epsilon_slider").value);
+    updateLocationNoise(document.getElementById("location_slider").value);
+    </script>
+    {% endif %}
+
+    <!-- Always place the endif - after the \script -->
+
+</body>
+</html>
+
+>>>>>>> 9e3c9043c787f60fe44f3f94dfa7bb9e010db566
