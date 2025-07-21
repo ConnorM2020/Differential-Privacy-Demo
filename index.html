@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Differential Privacy Demo</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+        }
+
+        header {
+            background-color: #000;
+            color: #ff3c3c;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .container-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            width: 100%;
+            max-width: none;
+            margin: 0 auto;
+            align-items: start;
+            box-sizing: border-box;
+        }
+
+
+
+        .box {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+
+        /* Geometric Map for Individuals  */
+        #map {
+            height: 800px;
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+
+
+        .box-full {
+            grid-column: span 2;
+        }
+
+        table {
+            width: 100%;
+            font-size: 12px;
+            table-layout: fixed;
+            word-wrap: break-word;
+        }
+
+        th,
+        td {
+            padding: 6px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+
+        @media (max-width: 1000px) {
+            .container-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .box-full {
+                grid-column: span 1;
+            }
+        }
+
+        .info {
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+        }
+
+        .summary-section {
+            display: flex;
+            gap: 60px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .summary-section ul {
+            margin-top: 0;
+        }
+
+        th,
+        td {
+            padding: 4px 6px;
+            /* Less padding */
+            border: 1px solid #ccc;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Modal background overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Modal About content */
+        .modal-content {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            width: 70vw;
+            /* wider modal box (e.g. 70% of viewport width) */
+            max-height: 70vh;
+            /* limit height to 70% of viewport height */
+            overflow-y: auto;
+            /* enable vertical scrolling if content overflows */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .close-btn {
+            float: right;
+            cursor: pointer;
+            color: red;
+            font-size: 18px;
+        }
+
+        .open-modal-btn {
+            margin: 15px;
+            padding: 10px 20px;
+            background-color: #ff3c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .topbar {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 2000;
+        }
+
+        .dots-btn {
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: white;
+            padding: 6px 10px;
+            background-color: #222;
+            border-radius: 5px;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 40px;
+            left: 0;
+            background-color: #fff;
+            min-width: 160px;
+            border: 1px solid #ccc;
+            z-index: 3000;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .dropdown-content a {
+            color: black;
+            padding: 10px 14px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #f2f2f2;
+        }
+
+        /* Showcase results of vulnerable users at risk */
+        #attack_result table {
+            width: 100%;
+            margin-top: 10px;
+            border-collapse: collapse;
+        }
+
+        /* Showcase results of vulnerable users at risk */
+        #attack_result th,
+        #attack_result td {
+            padding: 6px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        #vulnerableUsersContainer table tr:hover {
+            background-color: #f0f8ff;
+            /* Light blue background */
+            cursor: pointer;
+            /* Pointer cursor */
+        }
+
+        #vulnerableUsersContainer table tr {
+            transition: background-color 0.2s ease;
+        }
+
+        #attackedUserModal .modal-content {
+            background-color: #fff0f0;
+            border: 2px solid red;
+
+        }
+    </style>
+
+    <script>
+        function populateAttackForm(user) {
+            if (!user) return;
+
+            document.getElementById("known_age").value = user.age;
+            document.getElementById("known_hr").value = user.heart_rate;
+
+            const townDropdown = document.getElementById("known_town");
+            const match = Array.from(townDropdown.options).find(opt =>
+                opt.textContent.trim().toLowerCase() === user.town.toLowerCase()
+            );
+            if (match) {
+                townDropdown.value = match.value;
+            } else {
+                console.warn(`⚠️ Town "${user.town}" not found in dropdown.`);
+            }
+        }
+        let debounceTimer;
+
+        function handleSliderUpdate(type) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const epsilon = parseFloat(
+                    type === "attribute"
+                        ? document.getElementById("epsilon_slider").value
+                        : document.getElementById("location_slider").value
+                );
+                updateAccuracyChart(epsilon, type);
+            }, 150);
+        }
+
+        async function loadAvailableTowns() {
+            try {
+                const response = await fetch('/available_towns');
+                const result = await response.json();
+                const towns = result.towns;
+
+                const dropdown = document.getElementById("known_town");
+                dropdown.innerHTML = "";
+
+                towns.forEach(town => {
+                    const option = document.createElement("option");
+                    option.value = town;
+                    option.textContent = town;
+                    dropdown.appendChild(option);
+                });
+
+                console.log("Loaded towns:", result); // Just log here
+            } catch (err) {
+                console.error("Failed to load towns:", err);
+            }
+        }
+
+        // About function
+        function toggleAbout(show) {
+            document.getElementById("aboutModal").style.display = show ? "flex" : "none";
+        }
+
+       
+        window.addEventListener("click", function (e) {
+            const aboutModal = document.getElementById("aboutModal");
+            if (e.target === aboutModal) {
+                aboutModal.style.display = "none";
+            }
+        });
+
+        // Attack user view details - Added by GPT 20/07/25
+        window.addEventListener("click", function (e) {
+            const modal = document.getElementById("userDetailsModal");
+            if (e.target === modal) {
+                modal.style.display = "none";
+            }
+        });
+
+        function toggleMenu() {
+            const menu = document.getElementById("dropdownMenu");
+            menu.style.display = (menu.style.display === "block") ? "none" : "block";
+        }
+
+        window.onclick = function (event) {
+            const menu = document.getElementById("dropdownMenu");
+            const btn = document.querySelector(".dots-btn");
+
+            if (!menu.contains(event.target) && event.target !== btn) {
+                menu.style.display = "none";
+            }
+        };
+    </script>
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Add Charts.js -->
+</head>
+
+<body>
+    <header>Differential Privacy Dashboard</header>
+    <div class="topbar">
+        <button class="dots-btn" onclick="toggleMenu()">⋮</button>
+        <div id="dropdownMenu" class="dropdown-content">
+            <a href="#" onclick="toggleAttackSim(true)">Simulate Attack</a>
+            <a href="#" onclick="toggleAbout(true)">About</a>
+        </div>
+    </div>
+
+
+    <div class="container-grid">
+        <!-- About Modal Definition (Two Column Layout) -->
+        <div id="aboutModal" class="modal-overlay">
+            <div class="modal-content">
+                <span class="close-btn" onclick="toggleAbout(false)">✖</span>
+                <h3>About This Dashboard</h3>
+                <p>
+                    This Differential Privacy Dashboard demonstrates how personal data can be protected using modern privacy-preserving techniques, specifically <strong>Differential Privacy (DP)</strong>. It visualizes the trade-offs between data utility and privacy through interactive components such as sliders, charts, maps, and simulated attacks.
+                </p>
+
+                <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+                    <!-- Column 1 -->
+                    <div style="flex: 1; min-width: 300px;">
+                        <h4>📋 Patient Data Table</h4>
+                        <p>
+                            The central data table presents anonymised synthetic patient records, including attributes such as <em>name</em>, <em>town</em>, <em>age</em>, <em>heart rate</em>, and <em>diagnosis</em>. These records are using differential privacy noise, helping prevent re-identification of individuals while preserving statistical relevance.
+                        </p>
+
+                        <h4>📈 Accuracy vs Privacy Chart (MAE)</h4>
+                        <p>
+                            The two charts visualise the trade-off between privacy and accuracy using <strong>Mean Absolute Error (MAE)</strong>. As epsilon (ε) increases, noise decreases, resulting in more accurate but less private data. Conversely, smaller ε-values increase privacy by introducing more noise.
+                        </p>
+
+                        <h4>🗺️ Location Privacy Map</h4>
+                        <p>
+                            The map shows randomised patient locations, obfuscated with Laplace noise. Markers represent patients, and their geographic distortion depends on the current <strong>location ε</strong> setting. Lower ε-values mean more geographic privacy.
+                        </p>
+                    </div>
+
+                    <!-- Column 2 -->
+                    <div style="flex: 1; min-width: 300px;">
+                        <h4>🎚️ Attribute & Location Sliders</h4>
+                        <ul>
+                            <li><strong>ε (Attributes):</strong> Controls noise added to fields like age and heart rate.</li>
+                            <li><strong>ε (Location):</strong> Controls the distortion of geographic coordinates (latitude/longitude).</li>
+                            <li><strong>ε (Table Noise):</strong> Applies noise specifically to table-level views of data.</li>
+                        </ul>
+                        <p>
+                            Adjusting these sliders updates the map and data table in real time, letting users observe the impact of different privacy levels on data accuracy.
+                        </p>
+
+                        <h4>🧠 Attack Simulation & Vulnerability Detection</h4>
+                        <p>
+                            This system also includes an Attack Simulation Mode that mimics <em>re-identification</em> and <em>membership inference</em> attacks. Vulnerable users who are at risk of exposure are identified based on their privacy risk scores.
+                        </p>
+                        <ul>
+                            <li>Clicking "Simulate" runs a backend attack using selected attributes.</li>
+                            <li>"Details" opens a modal showing sensitive fields (e.g. name, town, age, vital signs).</li>
+                            <li>As the ε slider moves right, more vulnerable users appear, mimicking increased exposure risk.</li>
+                        </ul>
+                        <p>
+                            The panel reveals up to 10 vulnerable users, with visibility increasing as privacy decreases (from <em>More Private</em> to <em>Less Private</em>).
+                        </p>
+                    </div>
+                </div>
+
+                <p style="margin-top: 25px;"><em>Created as part of the <strong>Privacy Enhancing Technologies (PETs) Summer Internship, 2025</strong><br>
+                Technologies: Flask · Leaflet.js · Chart.js · HTML/CSS/JS</em></p>
+            </div>
+        </div>
+
+
+
+        <!-- Attack Simulation Modal -->
+        <div id="attackModal" class="modal-overlay">
+            <div class="modal-content"
+                style="display: flex; flex-direction: column; gap: 30px; max-height: 70vh; overflow-y: auto;">
+
+
+                <!-- LEFT COLUMN: Attack Simulation Form -->
+                <div style="flex: 1;">
+                    <span class="close-btn" onclick="toggleAttackSim(false)">✖</span>
+                    <h3>Attack Simulation Mode</h3>
+                    <p>Simulate a re-identification or membership inference attack to test DP protection.</p>
+
+                    <div id="attack_result" class="info" style="margin-top:20px;"></div>
+                    <label for="privacy_slider">Privacy Level (ε):</label><br>
+
+                    <input type="range" id="privacy_slider" min="0.01" max="1.0" step="0.01" value="0.5">
+
+                    <span id="privacy_level_label"
+                        style="margin-left: 8px; padding: 4px 8px; background: #4a4aff; color: white; border-radius: 5px;">Balanced
+                    </span>
+                    <br><br>
+
+                </div>
+                <!--  PROMPT: Attacked User Warning -->
+                <div id="attackedUserModal" class="modal-overlay" style="z-index: 1100;">
+                    <div class="modal-content"
+                        style="max-width: 500px; text-align: center; background-color: #fff0f0; border: 2px solid red;">
+                        <span class="close-btn"
+                            onclick="document.getElementById('attackedUserModal').style.display = 'none';">✖</span>
+                        <h2 style="color: red;">⚠️ USER IS UNDER ATTACK ⚠️</h2>
+                        <div id="attackedUserDetails" style="margin-top: 20px; font-size: 16px;"></div>
+                    </div>
+                </div>
+                <!-- Modal for Viewing Full User Details -->
+                <div id="userDetailsModal" class="modal-overlay" style="z-index: 1100;">
+                    <div class="modal-content" style="max-width: 500px; border: 2px solid #4a4aff;">
+                        <span class="close-btn"
+                            onclick="document.getElementById('userDetailsModal').style.display = 'none';">✖</span>
+                        <h2 style="color: #4a4aff;">🧾 User Details</h2>
+                        <div id="userDetailsContent" style="margin-top: 20px; font-size: 16px;"></div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: Vulnerable Users Output -->
+                <div style="flex: 1; border-left: 1px solid #ccc; padding-left: 20px;">
+                    <!-- <h4> Vulnerable Users</h4> -->
+                    <div id="vulnerableUsersContainer" class="info"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Box 2: Wider Data Table -->
+        <div class="box box-full">
+            <h3>Sample Patient Data (First 10 Rows)</h3>
+            <table id="sample_table">
+                <!-- Attribute Noise Slider (top-left for table) -->
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <label for="epsilon-table-slider" style="margin-right: 10px; font-weight: bold;">ε Table
+                        Noise:</label>
+                    <input type="range" id="epsilon-table-slider" min="0.1" max="1.0" step="0.05" value="0.5"
+                        style="width: 200px;" oninput="updateTableNoiseLabel(this.value)">
+                    <span id="epsilon-table-value"
+                        style="margin-left: 10px; padding: 4px 8px; background: #4a4aff; color: white; border-radius: 5px;">Balanced</span>
+                </div>
+                <thead>
+                    <tr>
+                        {% for col in sample_data.columns %}
+                        <th>{{ col }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for _, row in sample_data.head(10).iterrows() %}
+                    <tr>
+                        {% for col in sample_data.columns %}
+                        <td>{{ row[col] }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Box 3: Full-width container for Charts + Map -->
+        <div class="box box-full" style="padding: 0; border: none; box-shadow: none;">
+            <div class="container-grid">
+
+                <!-- LEFT: Charts -->
+                <div class="box">
+                    <h3>Attribute Noise: Age MAE</h3>
+                    <canvas id="attributeChart" width="100%" height="40"></canvas>
+
+                    <!-- JSON response to document.querySelector('input[name="epsilon_avg"]').value = epsilon;-->
+                    <input type="hidden" name="epsilon_avg" value="0.5">
+
+
+                    <h3 style="margin-top: 30px;">Location Noise: Latitude & Longitude MAE</h3>
+                    <canvas id="locationChart" width="100%" height="40"></canvas>
+                    <!-- get accuracy_metrics HTTP JSON response  -->
+
+                    <!-- JSON response to document.querySelector('input[name="epsilon_avg"]').value = val; -->
+                    <input type="hidden" name="epsilon_count" value="0.5">      
+
+                </div>
+
+                <!-- RIGHT: Map + Sliders -->
+                <div class="box">
+                    <h3>Location Privacy & Map</h3>
+                    <div id="map" style="height: 600px; width: 100%; margin-bottom: 20px;"></div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label for="epsilon_slider"><strong>ε (Attributes):</strong></label>
+                        <input type="range" id="epsilon_slider" min="0.01" max="1.0" step="0.01" value="0.5"
+                            oninput="updateNoiseLabel(this.value); updateAttributePrivacyLabel(this.value)">
+                        <span id="attribute_privacy_label"
+                            style="margin-left: 8px; padding: 4px 8px; background: #4a4aff; color: white; border-radius: 5px;">
+                            Balanced
+                        </span>
+                    </div>
+
+                    <div>
+                        <label for="location_slider"><strong>ε (Location):</strong></label>
+                        <input type="range" id="location_slider" min="0.01" max="1.0" step="0.01" value="0.5"
+                            oninput="updateLocationNoise(this.value); updateLocationPrivacyLabel(this.value)">
+                        <span id="location_privacy_label"
+                            style="margin-left: 8px; padding: 4px 8px; background: #4a4aff; color: white; border-radius: 5px;">
+                            Balanced
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Start of Front end function definitions. -->
+        <script>
+            let map, markerLayer;
+            let locationEpsilon = 0.5;
+            let noisyAttributeData = [];
+            let noisyLocationData = [];
+            let columnHeaders = [];
+            let lastAttackPayload = null;
+
+            let attrReady = false;
+            let locReady = false;
+
+            function initMap() {
+                if (!map) {
+                    map = L.map('map').setView([53.5, -7.6], 6);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(map);
+                    markerLayer = L.layerGroup().addTo(map);
+                }
+            }
+
+            // //////////////////////////
+            // Check for Attack functions 
+            function toggleAttackSim(show) {
+                document.getElementById("attackModal").style.display = show ? "flex" : "none";
+            }
+            function runAttackSim() {
+                const type = document.getElementById("attack_type").value;
+                const age = document.getElementById("known_age").value;
+                const town = document.getElementById("known_town").value;
+                const hr = document.getElementById("known_hr").value;
+                const epsilon = parseFloat(document.getElementById("privacy_slider").value);
+
+
+                if (!town || town === "" || town === "Select town") {
+                    alert("Please select a valid town before running the simulation.");
+                    return;
+                }
+
+                lastAttackPayload = { attack_type: type, age, town, heart_rate: hr, epsilon };
+
+                fetch("/simulate_attack", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(lastAttackPayload)
+                })
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error("Invalid request. Ensure the selected user is from the top 10 visible records.");
+                        }
+                        return res.json();
+                    })
+                    .then(data => renderAttackResults(data))
+                    .catch(err => {
+                        document.getElementById("attack_result").innerHTML =
+                            `<div style="color:red;"><strong>❌ Error:</strong> ${err.message}</div>`;
+                    });
+            }
+
+            // runAttackSim() helper function
+            function renderAttackResults(data) {
+                const resultDiv = document.getElementById("attack_result");
+                resultDiv.innerHTML = "";
+
+                // Base result
+                let html = `<strong>Result:</strong> ${data.result}<br><br>`;
+
+                // Optional details if backend supports them
+                if (data.match_confidence !== undefined) {
+                    html += `<strong>Match Confidence:</strong> ${(data.match_confidence * 100).toFixed(1)}%<br>`;
+                }
+                if (data.match_count !== undefined && data.dataset_size !== undefined) {
+                    html += `<strong>Matches:</strong> ${data.match_count} / ${data.dataset_size}<br><br>`;
+                }
+
+                if (data.matched_records && data.matched_records.length > 0) {
+                    html += `<h4>Matching Records (Sample):</h4>`;
+                    html += `<table><tr><th>Name</th><th>Age</th><th>Town</th><th>HR</th></tr>`;
+                    const unique = new Set();
+                    data.matched_records.forEach(rec => {
+                        const key = `${rec.forename}-${rec.surname}-${rec.age}-${rec.town}-${rec.heart_rate}`;
+                        if (!unique.has(key)) {
+                            unique.add(key);
+                            html += `<tr><td>${rec.forename} ${rec.surname}</td><td>${rec.age}</td><td>${rec.town}</td><td>${rec.heart_rate}</td></tr>`;
+                        }
+                    });
+                    html += `</table>`;
+                }
+                resultDiv.innerHTML = html;
+
+                // === Vulnerable Users Table with Simulate Button ===
+                const vulnerableDiv = document.getElementById("vulnerableUsersContainer");
+                vulnerableDiv.innerHTML = "";
+
+                if (data.vulnerable_users && data.vulnerable_users.length > 0) {
+                    const container = document.createElement("div");
+                    const heading = document.createElement("h4");
+                    heading.innerHTML = "⚠️ Vulnerable Users Detected:";
+                    container.appendChild(heading);
+
+                    const table = document.createElement("table");
+                    const header = document.createElement("tr");
+                    header.innerHTML = `
+                        <th>Name</th><th>Town</th><th>Age</th><th>Heart Rate</th><th>Status</th><th>Action</th>`;
+                    table.appendChild(header);
+                    let index = 0;
+
+                    function showNextVulnerableUser() {
+                        if (index >= data.vulnerable_users.length) return;
+                        const user = data.vulnerable_users[index];
+                        addVulnerableUserRow(table, user);  // Call helper function
+                        index++;
+                        setTimeout(showNextVulnerableUser, 500);  // Adjust delay as needed
+                    }
+                    showNextVulnerableUser();
+
+
+
+                    container.appendChild(table);
+                    vulnerableDiv.appendChild(container);
+                } else {
+                    vulnerableDiv.innerHTML = `<p>No vulnerable users detected.</p>`;
+                }
+            }
+
+            // Helper function for renderAttackDetails()
+            function addVulnerableUserRow(table, user) {
+                const risk = user.risk_score ?? 1.0;
+                const riskColor = risk > 0.7 ? 'red' : risk > 0.4 ? 'orange' : 'green';
+
+                const row = document.createElement("tr");
+                row.style.backgroundColor = riskColor;
+                row.style.color = "white";
+
+                const nameCell = document.createElement("td");
+                nameCell.textContent = user.name;
+
+                const townCell = document.createElement("td");
+                townCell.textContent = user.town;
+
+                const ageCell = document.createElement("td");
+                ageCell.textContent = user.age;
+
+                const hrCell = document.createElement("td");
+                hrCell.textContent = user.heart_rate;
+
+                const statusCell = document.createElement("td");
+                statusCell.textContent = user.status;
+                statusCell.setAttribute("data-risk", risk.toFixed(2));
+
+                const actionCell = document.createElement("td");
+
+                const simulateBtn = document.createElement("button");
+                simulateBtn.textContent = "⚔️ Attack";
+                simulateBtn.style.cssText = `
+                    padding: 4px 8px;
+                    background-color: #444;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    margin-right: 6px;
+                `;
+                simulateBtn.onclick = () => simulateAttack(user);
+
+                const detailsBtn = document.createElement("button");
+                detailsBtn.textContent = "Details";
+                detailsBtn.style.cssText = `
+                    padding: 4px 8px;
+                    background-color: #666;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                `;
+                detailsBtn.onclick = () => {
+                    const modal = document.getElementById("userDetailsModal");
+                    const content = document.getElementById("userDetailsContent");
+
+                    content.innerHTML = `
+                        <p><strong>Name:</strong> ${user.name}</p>
+                        <p><strong>Town:</strong> ${user.town}</p>
+                        <p><strong>Age:</strong> ${user.age}</p>
+                        <p><strong>Heart Rate:</strong> ${user.heart_rate}</p>
+                        <p><strong>Status:</strong> ${user.status}</p>
+                        <p><strong>Risk Score:</strong> ${(user.risk_score ?? "N/A")}</p>
+                        <p><em>Note:</em> This user may be vulnerable to re-identification or inference attacks under current privacy settings (ε = ${parseFloat(document.getElementById("privacy_slider").value).toFixed(2)}).</em></p>
+                    `;
+                    modal.style.display = "flex";
+                };
+
+                actionCell.appendChild(simulateBtn);
+                actionCell.appendChild(detailsBtn);
+
+                row.appendChild(nameCell);
+                row.appendChild(townCell);
+                row.appendChild(ageCell);
+                row.appendChild(hrCell);
+                row.appendChild(statusCell);
+                row.appendChild(actionCell);
+
+                table.appendChild(row);
+            }
+
+
+
+            function rerunAttackWithNewEpsilon(epsilon) {
+                if (!lastAttackPayload) return;
+                const updatedPayload = { ...lastAttackPayload, epsilon: parseFloat(epsilon) };
+
+                fetch("/simulate_attack", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedPayload)
+                })
+                    .then(res => res.json())
+                    .then(data => renderAttackResults(data));
+            }
+
+            function adjustPrivacyVisibility(val) {
+                const label = document.getElementById("privacy_level_label");
+                const epsilon = parseFloat(val);
+
+                // Update label
+                if (epsilon < 0.3) {
+                    label.textContent = "More Private";
+                    label.style.backgroundColor = "#008000"; // green
+                } else if (epsilon < 0.7) {
+                    label.textContent = "Balanced";
+                    label.style.backgroundColor = "#4a4aff"; // blue
+                } else {
+                    label.textContent = "Less Private";
+                    label.style.backgroundColor = "#ff4d4d"; // red
+                }
+
+                // Loop over user table rows
+                const rows = document.querySelectorAll("#vulnerableUsersContainer table tr");
+                rows.forEach((row, index) => {
+                    if (index === 0) return; // skip header
+                    const statusCell = row.querySelector("td[data-risk]");
+
+                    if (statusCell) {
+                        const score = parseFloat(statusCell.getAttribute("data-risk"));
+                        console.log("Filtering users with epsilon =", epsilon);
+                        console.log("Risk score for this row:", score);
+                        row.style.display = score >= (1.0 - epsilon) ? "" : "none";
+
+                    }
+                });
+            }
+            
+            async function fetchVulnerableUsersByEpsilon(epsilon) {
+                try {
+                    const res = await fetch(`/vulnerable_users?epsilon=${epsilon}`);
+                    const users = await res.json();
+                    const container = document.getElementById("vulnerableUsersContainer");
+                    container.innerHTML = "";  // Clear old content
+
+                    if (users.length === 0) {
+                        container.innerHTML = "<p>No vulnerable users detected at this level.</p>";
+                        return;
+                    }
+
+                    // Create container
+                    const heading = document.createElement("h4");
+                    heading.innerHTML = "⚠️ Vulnerable Users Detected:";
+
+                    const table = document.createElement("table");
+                    const headerRow = document.createElement("tr");
+                    headerRow.innerHTML = `
+                        <th>Name</th>
+                        <th>Town</th>
+                        <th>Age</th>
+                        <th>Heart Rate</th>
+                        <th>Status</th>
+                        <th>Action</th>`;
+                    table.appendChild(headerRow);
+
+                    users.forEach(user => {
+                        addVulnerableUserRow(table, user);  // ✅ Uses working version
+                    });
+
+                    container.appendChild(heading);
+                    container.appendChild(table);
+                    adjustPrivacyVisibility(epsilon);  // Filter by current privacy level
+                } catch (err) {
+                    console.error("Failed to fetch vulnerable users:", err);
+                }
+            }
+
+
+
+
+            //  Alter noise functions
+            // Fetch and update attribute-based noise (ε for age, etc.)
+            function updateNoiseLabel(val) {
+                val = parseFloat(val).toFixed(2);
+
+                document.querySelector('input[name="epsilon_avg"]').value = val;
+                document.querySelector('input[name="epsilon_count"]').value = val;
+
+                attrReady = false;
+
+                // Fetch original clean data if ε = 1.00
+                const url = (parseFloat(val) >= 0.99)
+                    ? `/noisy_data?epsilon=1.0`
+                    : `/noisy_data?epsilon=${val}`;
+
+
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        noisyAttributeData = data.records;
+                        columnHeaders = data.columns;
+                        attrReady = true;
+                        if (attrReady && locReady) {
+                            mergeAndRender(noisyAttributeData, noisyLocationData, columnHeaders);
+                        }
+                    });
+            }
+            // Location nosie function
+            // Fetch and update location noise (ε for coordinates)
+            function updateLocationNoise(val) {
+                const epsilon = document.getElementById("epsilon_slider").value;
+                locationEpsilon = parseFloat(val).toFixed(2);
+
+
+                locReady = false;
+                fetch(`/noisy_location_data?loc_epsilon=${locationEpsilon}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        noisyLocationData = data.records;
+                        locReady = true;
+                        if (attrReady && locReady) {
+                            mergeAndRender(noisyAttributeData, noisyLocationData, columnHeaders);
+                        }
+                    });
+            }
+
+            function updateAttributePrivacyLabel(val) {
+                const label = document.getElementById("attribute_privacy_label");
+                const epsilon = parseFloat(val);
+
+                if (epsilon < 0.3) {
+                    label.textContent = "More Private";
+                    label.style.backgroundColor = "#008000"; // Green
+                } else if (epsilon < 0.7) {
+                    label.textContent = "Balanced";
+                    label.style.backgroundColor = "#4a4aff"; // Blue
+                } else {
+                    label.textContent = "Less Private";
+                    label.style.backgroundColor = "#ff4d4d"; // Red
+                }
+            }
+
+            function updateLocationPrivacyLabel(val) {
+                const label = document.getElementById("location_privacy_label");
+                const epsilon = parseFloat(val);
+
+                if (epsilon < 0.3) {
+                    label.textContent = "More Private";
+                    label.style.backgroundColor = "#008000"; // Green
+                } else if (epsilon < 0.7) {
+                    label.textContent = "Balanced";
+                    label.style.backgroundColor = "#4a4aff"; // Blue
+                } else {
+                    label.textContent = "Less Private";
+                    label.style.backgroundColor = "#ff4d4d"; // Red
+                }
+            }
+
+            function updateTableNoiseLabel(val) {
+                const label = document.getElementById("epsilon-table-value");
+                const epsilon = parseFloat(val).toFixed(2);
+
+                // Update qualitative label
+                if (epsilon < 0.3) {
+                    label.textContent = "More Private";
+                    label.style.backgroundColor = "#008000"; // Green
+                } else if (epsilon < 0.7) {
+                    label.textContent = "Balanced";
+                    label.style.backgroundColor = "#4a4aff"; // Blue
+                } else {
+                    label.textContent = "Less Private";
+                    label.style.backgroundColor = "#ff4d4d"; // Red
+                }
+
+                // Fetch and update table
+                fetch(`/noisy_data?epsilon=${epsilon}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const table = document.querySelector("#sample_table tbody");
+                        const columns = data.columns;
+                        const records = data.records;
+                        table.innerHTML = "";
+
+                        records.forEach(row => {
+                            const tr = document.createElement("tr");
+                            columns.forEach(col => {
+                                const td = document.createElement("td");
+                                td.textContent = row[col];
+                                tr.appendChild(td);
+                            });
+                            table.appendChild(tr);
+                        });
+                    });
+            }
+
+            // Merge and display both noisy datasets
+            function mergeAndRender(attrData, locData, columns) {
+                if (!attrData.length || !locData.length) return;
+
+                const merged = attrData.map((attrRow, i) => {
+                    const locRow = locData[i] || {};
+                    return {
+                        ...attrRow,
+                        town_lat: locRow.town_lat ?? attrRow.town_lat,
+                        town_lon: locRow.town_lon ?? attrRow.town_lon
+                    };
+                });
+                renderTableAndMap({ columns, records: merged });
+            }
+
+            // Display merged table and map markers
+            function renderTableAndMap(data) {
+                const table = document.querySelector("#sample_table tbody");
+                const columns = data.columns;
+                const records = data.records;
+                table.innerHTML = "";
+
+                const attrEpsilon = parseFloat(document.getElementById("epsilon_slider").value);
+
+                const scramble = str =>
+                    str.split('').map(c => Math.random() < 0.6 ? "*@#$%&"[Math.floor(Math.random() * 6)] : c).join('');
+
+                records.forEach(row => {
+                    const tr = document.createElement("tr");
+                    columns.forEach(col => {
+                        const td = document.createElement("td");
+                        td.textContent = row[col];
+                        tr.appendChild(td);
+                    });
+                    table.appendChild(tr);
+                });
+
+                // 👇 Map rendering logic updated to conditionally scramble name
+                if (markerLayer) {
+                    markerLayer.clearLayers();
+                } else {
+                    markerLayer = L.layerGroup().addTo(map);
+                }
+
+                records.forEach(loc => {
+                    if (loc.town_lat && loc.town_lon) {
+                        let displayName = attrEpsilon >= 0.99
+                            ? `${loc.forename} ${loc.surname}`
+                            : `${scramble(loc.forename)} ${scramble(loc.surname)}`;
+
+                        const popupHtml = `
+                            <b>${displayName}</b><br>
+                            Age: ${loc.age}<br>
+                            Gender: ${loc.gender}<br>
+                            Town: ${loc.town}<br>
+                            Diagnosis: ${loc.diagnosis}<br>
+                            Email: <a href="mailto:${loc.email}">${loc.email}</a><br>
+                            Phone: ${loc.phone_number}<br>
+                            Address: ${loc.address}
+                        `;
+                        L.marker([loc.town_lat, loc.town_lon])
+                            .bindPopup(popupHtml)
+                            .addTo(markerLayer);
+                    }
+                });
+            }
+
+
+        </script>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", async function () {
+                // 1. Initialize map
+                if (!map) {
+                    map = L.map('map').setView([53.5, -7.6], 6);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(map);
+                    markerLayer = L.layerGroup().addTo(map);
+                }
+
+                // 3. Inject user AFTER towns are loaded
+                try {
+                    const res = await fetch('/inject_target_user');
+                    const user = await res.json();
+                    console.log("Injected target user:", user); // Debugging
+
+                    // Fill in form values safely
+                    document.getElementById("known_age").value = user.age ?? "";
+                    document.getElementById("known_hr").value = user.heart_rate ?? "";
+
+                    const townDropdown = document.getElementById("known_town");
+                    const match = Array.from(townDropdown.options).find(opt =>
+                        opt.textContent?.trim()?.toLowerCase() === user.town?.toLowerCase()
+                    );
+
+                    if (match) {
+                        townDropdown.value = match.value;
+                        setTimeout(runAttackSim, 1000);  // Safe to run now
+                    } else {
+                        console.warn(`⚠️ Town "${user.town}" not found in dropdown. Loaded towns:`, Array.from(townDropdown.options).map(o => o.textContent));
+                    }
+                } catch (err) {
+                    console.error("❌ Failed to inject target user:", err);
+                }
+
+                // 4. Fetch noisy datasets
+                const epsilon = parseFloat(document.getElementById("epsilon_slider").value);
+                const locEpsilon = parseFloat(document.getElementById("location_slider").value);
+
+                await Promise.all([
+                    fetch(`/noisy_data?epsilon=${epsilon}`).then(res => res.json()),
+                    fetch(`/noisy_location_data?loc_epsilon=${locEpsilon}`).then(res => res.json())
+                ]).then(([attrData, locData]) => {
+                    noisyAttributeData = attrData.records;
+                    noisyLocationData = locData.records;
+                    columnHeaders = attrData.columns;
+                    mergeAndRender(noisyAttributeData, noisyLocationData, columnHeaders);
+                });
+
+                updateNoiseLabel(epsilon);
+                updateLocationNoise(locEpsilon);
+                fetchVulnerableUsersByEpsilon(parseFloat(document.getElementById("privacy_slider").value));
+            });
+
+        </script>
+        <!-- Always place the endif - after the \script -->
+    </div>
+</body>
+</html>
+
+
+<script>
+    // --- Chart.js Setup for Accuracy MAE ---
+    const attrCtx = document.getElementById("attributeChart").getContext("2d");
+    const locCtx = document.getElementById("locationChart").getContext("2d");
+
+    const attributeChart = new Chart(attrCtx, {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [{
+                label: "Age MAE",
+                borderColor: "blue",
+                data: [],
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: "bottom" } },
+            scales: {
+                x: { title: { display: true, text: 'Epsilon (ε)' } },
+                y: { beginAtZero: true, title: { display: true, text: 'Mean Absolute Error (MAE)' } }
+            }
+        }
+    });
+
+    const locationChart = new Chart(locCtx, {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: "Latitude MAE",
+                    borderColor: "green",
+                    data: [],
+                    fill: false
+                },
+                {
+                    label: "Longitude MAE",
+                    borderColor: "red",
+                    data: [],
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: "bottom" } },
+            scales: {
+                x: { title: { display: true, text: 'Epsilon (ε)' } },
+                y: { beginAtZero: true, title: { display: true, text: 'Mean Absolute Error (MAE)' } }
+            }
+        }
+    });
+
+
+    // Continue with normal functions
+
+    async function updateAccuracyChart(epsilon, type = "all") {
+        try {
+            const res = await fetch(`/accuracy_metrics?epsilon=${epsilon}`);
+            const result = await res.json();
+            const label = epsilon.toFixed(2);
+
+            if (type === "attribute" || type === "all") {
+                if (!attributeChart.data.labels.includes(label)) {
+                    attributeChart.data.labels.push(label);
+                    attributeChart.data.datasets[0].data.push(result.age_mae);
+                    attributeChart.update();
+                }
+            }
+
+            if (type === "location" || type === "all") {
+                if (!locationChart.data.labels.includes(label)) {
+                    locationChart.data.labels.push(label);
+                    locationChart.data.datasets[0].data.push(result.lat_mae);
+                    locationChart.data.datasets[1].data.push(result.lon_mae);
+                    locationChart.update();
+                }
+            }
+        } catch (err) {
+            console.error("Error updating charts:", err);
+        }
+    }
+
+
+
+    // Attach to both sliders
+    document.getElementById("epsilon_slider").addEventListener("input", () => handleSliderUpdate("attribute"));
+    document.getElementById("location_slider").addEventListener("input", () => handleSliderUpdate("location"));
+
+    document.getElementById("epsilon-table-slider").addEventListener("input", handleSliderUpdate);
+
+    document.getElementById("epsilon_slider").addEventListener("input", function () {
+        const epsilon = parseFloat(this.value);
+        updateAccuracyChart(epsilon, "attribute");
+    });
+
+    document.getElementById("location_slider").addEventListener("input", function () {
+        const epsilon = parseFloat(this.value);
+        updateAccuracyChart(epsilon, "location");
+    });
+
+
+    // Initial chart draw
+    updateAccuracyChart(parseFloat(document.getElementById("epsilon_slider").value));
+
+
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const sampleRows = document.querySelectorAll("#sample_table tbody tr");
+
+        sampleRows.forEach(row => {
+            row.style.cursor = "pointer"; // Change cursor for clarity
+            row.addEventListener("click", () => {
+                const cells = row.querySelectorAll("td");
+
+                const age = cells[2]?.textContent.trim();     // Adjust if needed based on column order
+                const town = cells[4]?.textContent.trim();
+                const hr = cells[6]?.textContent.trim();
+
+                // Fill attack modal inputs
+                document.getElementById("known_age").value = age;
+                document.getElementById("known_hr").value = hr;
+
+                const townDropdown = document.getElementById("known_town");
+                const townOptions = Array.from(townDropdown.options);
+
+                const match = townOptions.find(opt => opt.textContent.trim() === town);
+                if (match) {
+                    townDropdown.value = match.value;
+                } else {
+                    alert(`⚠️ Town "${town}" not available in the dropdown. You may need to reload towns.`);
+                }
+
+                row.style.backgroundColor = "#eaf6ff";
+                setTimeout(() => row.style.backgroundColor = "", 1000);
+            });
+        });
+    });
+
+    function renderUserTable(users) {
+        const tbody = document.getElementById("vulnerableUsersBody");
+        tbody.innerHTML = "";
+
+        users.forEach(user => {
+            const row = document.createElement("tr");
+            row.classList.add("user-row");
+
+            row.innerHTML = `
+            <td>${user.name}</td>
+            <td>${user.town}</td>
+            <td>${user.age}</td>
+            <td>${user.heart_rate}</td>
+            <td>${user.status}</td>
+            `;
+
+            row.addEventListener("click", () => simulateAttack(user));
+            tbody.appendChild(row);
+        });
+    }
+
+    function simulateTamper(user) {
+        const tamperedUser = {
+            ...user,
+            age: user.age + 5,
+            heart_rate: user.heart_rate + 15,
+            tampered: true
+        };
+        const rows = document.querySelectorAll("#vulnerableUsersContainer table tr");
+
+        rows.forEach(row => {
+            const cells = row.querySelectorAll("td");
+            const name = cells[0]?.textContent.trim();
+
+            if (name === user.name) {
+                // Update values
+                cells[2].textContent = tamperedUser.age;
+                cells[3].textContent = tamperedUser.heart_rate;
+
+                // Highlight changes
+                cells[2].style.backgroundColor = "#ffcccc";
+                cells[3].style.backgroundColor = "#ffcccc";
+
+                cells[2].title = "Tampered Age";
+                cells[3].title = "Tampered Heart Rate";
+
+                row.style.border = "2px solid red";
+                row.title = "This user's data has been manipulated.";
+
+                // Optional: Animate row
+                row.style.transition = "background-color 0.5s ease";
+                row.style.backgroundColor = "#ffe0e0";
+                setTimeout(() => {
+                    row.style.backgroundColor = "";
+                }, 1000);
+            }
+        });
+
+        // Optional: Send to backend for logging
+        fetch("/simulate_tamper", {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tamperedUser)
+        });
+    }
+
+
+    async function simulateAttack(user) {
+        console.log("[simulateAttack] Triggered for:", user);
+
+        await loadAvailableTowns();
+
+        // Inject user details into modal content
+        const modal = document.getElementById("attackedUserModal");
+        const modalContent = document.getElementById("attackedUserDetails");
+
+        modalContent.innerHTML = `
+            <p><strong>Name:</strong> ${user.name}</p>
+            <p><strong>Town:</strong> ${user.town}</p>
+            <p><strong>Age:</strong> ${user.age}</p>
+            <p><strong>Heart Rate:</strong> ${user.heart_rate}</p>
+            <p><strong>Status:</strong> ${user.status}</p>
+            <p><strong>Risk Score:</strong> ${(user.risk_score ?? "N/A")}</p>
+        `;
+
+        // Show the modal
+        modal.style.display = "flex";
+
+        // Optionally: Re-fill the attack form with clicked user
+        document.getElementById("known_age").value = user.age;
+        document.getElementById("known_hr").value = user.heart_rate;
+
+        const townDropdown = document.getElementById("known_town");
+        const match = Array.from(townDropdown.options).find(opt => opt.textContent.trim() === user.town);
+        if (match) {
+            townDropdown.value = match.value;
+        }
+
+        // Run the actual attack for logging/effects
+        const epsilon = parseFloat(document.getElementById("privacy_slider").value);
+        const attackType = document.getElementById("attack_type").value;
+
+        const payload = {
+            attack_type: attackType,
+            age: user.age,
+            town: user.town,
+            heart_rate: user.heart_rate,
+            epsilon: epsilon
+        };
+
+        fetch("/simulate_attack", {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(res => res.json())
+            .then(data => {
+                renderAttackResults(data);  // Re-render attack table
+                simulateTamper(user);       // Optional: visually tamper their data
+            })
+            .catch(err => {
+                console.error("Attack simulation failed:", err);
+            });
+    }
+
+    // Enhance privacy slider with qualitative labels
+    document.addEventListener("DOMContentLoaded", function () {
+        const slider = document.getElementById("privacy_slider");
+        const label = document.getElementById("privacy_level_label");
+
+        function updatePrivacyLabel(val) {
+            const epsilon = parseFloat(val);
+
+            if (epsilon < 0.3) {
+                label.textContent = "More Private";
+                label.style.backgroundColor = "#008000"; // green
+            } else if (epsilon < 0.7) {
+                label.textContent = "Balanced";
+                label.style.backgroundColor = "#4a4aff"; // blue
+            } else {
+                label.textContent = "Less Private";
+                label.style.backgroundColor = "#ff4d4d"; // red
+            }
+        }
+
+        // Set initial label
+        updatePrivacyLabel(slider.value);
+
+        // Handle slider input change
+        slider.addEventListener("input", function () {
+            updatePrivacyLabel(this.value);
+            adjustPrivacyVisibility(this.value);
+            fetchVulnerableUsersByEpsilon(parseFloat(this.value));
+        });
+    });
+
+    // Auto-fetch on load
+    fetchVulnerableUsersByEpsilon(parseFloat(document.getElementById("privacy_slider").value));
+    // Auto-fetch vulnerable users based on initial ε
+    document.addEventListener("DOMContentLoaded", () => {
+        const initialEpsilon = parseFloat(document.getElementById("privacy_slider").value);
+        fetchVulnerableUsersByEpsilon(initialEpsilon);
+    });
+
+</script>
