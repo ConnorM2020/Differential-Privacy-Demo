@@ -1,0 +1,37 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Differential Privacy Dashboard</title>
+    <script>
+        function toggleModal(show) {
+            document.getElementById("queryModal").style.display = show ? "flex" : "none";
+        }
+        function toggleAbout(show) {
+            document.getElementById("aboutModal").style.display = show ? "flex" : "none";
+        }
+        function toggleMenu() {
+            const menu = document.getElementById("dropdownMenu");
+            menu.style.display = (menu.style.display === "block") ? "none" : "block";
+        }
+        window.onclick = function (event) {
+            const menu = document.getElementById("dropdownMenu");
+            const btn = document.querySelector(".dots-btn");
+            if (!menu.contains(event.target) && event.target !== btn) {
+                menu.style.display = "none";
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="topbar">
+        <button class="dots-btn" onclick="toggleMenu()">⋮</button>
+        <div id="dropdownMenu" class="dropdown-content">
+            <a href="#" onclick="toggleModal(true)">Query Patient Data</a>
+            <a href="/attack_simulation" target="_blank">Simulate Attack</a>
+            <a href="#" onclick="toggleAbout(true)">About</a>
+        </div>
+    </div>
+    <!-- Page content would go here (map, sliders, etc.) -->
+</body>
+</html>

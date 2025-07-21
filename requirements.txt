@@ -1,0 +1,4 @@
+flask
+faker
+numpy
+pandas
