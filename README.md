@@ -1,4 +1,4 @@
-**Differential Privacy Dashboard**
+#  Differential Privacy Dashboard
 
 A <strong> full-stack interactive dashboard <strong>  demonstrating the application of Differential Privacy (DP) for safeguarding sensitive data while allowing meaningful analysis. 
 Built as part of the PETs Summer Internship 2025, this tool visualises privacy-utility trade-offs and simulates re-identification attacks under varying privacy levels.
