@@ -1,10 +1,10 @@
-#  Differential Privacy Dashboard
+**Differential Privacy Dashboard**
 
 A <strong> full-stack interactive dashboard <strong>  demonstrating the application of Differential Privacy (DP) for safeguarding sensitive data while allowing meaningful analysis. 
 Built as part of the PETs Summer Internship 2025, this tool visualises privacy-utility trade-offs and simulates re-identification attacks under varying privacy levels.
 
 ---
-## Overview
+**Overview**
 
 This project showcases how differential privacy mechanisms can be applied to synthetic patient data, allowing users to:
 
@@ -15,7 +15,7 @@ Explore the concept of user vulnerability through a colour-coded risk interface.
 
 ---
 
-## Key Features
+**Key Features**
 
 - **Privacy Sliders**  
   Control attribute, location, and table noise using adjustable ε-values.
@@ -47,7 +47,7 @@ Explore the concept of user vulnerability through a colour-coded risk interface.
 
 ---
 
-## Getting Started
+Getting Started
 
 ### 1. Clone the repository
 ```bash
