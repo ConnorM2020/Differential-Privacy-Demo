@@ -301,7 +301,7 @@
             document.getElementById("aboutModal").style.display = show ? "flex" : "none";
         }
 
-       
+
         window.addEventListener("click", function (e) {
             const aboutModal = document.getElementById("aboutModal");
             if (e.target === aboutModal) {
@@ -359,57 +359,78 @@
                 <span class="close-btn" onclick="toggleAbout(false)">✖</span>
                 <h3>About This Dashboard</h3>
                 <p>
-                    This Differential Privacy Dashboard demonstrates how personal data can be protected using modern privacy-preserving techniques, specifically <strong>Differential Privacy (DP)</strong>. It visualizes the trade-offs between data utility and privacy through interactive components such as sliders, charts, maps, and simulated attacks.
+                    This Differential Privacy Dashboard demonstrates how personal data can be protected using modern
+                    privacy-preserving techniques, specifically <strong>Differential Privacy (DP)</strong>. It
+                    visualises the trade-offs between data utility and privacy through interactive components such as
+                    sliders, charts, maps, and simulated attacks.
                 </p>
 
                 <div style="display: flex; gap: 40px; flex-wrap: wrap;">
                     <!-- Column 1 -->
                     <div style="flex: 1; min-width: 300px;">
-                        <h4>📋 Patient Data Table</h4>
+                        <h4>📄Patient Data Table</h4>
                         <p>
-                            The central data table presents anonymised synthetic patient records, including attributes such as <em>name</em>, <em>town</em>, <em>age</em>, <em>heart rate</em>, and <em>diagnosis</em>. These records are using differential privacy noise, helping prevent re-identification of individuals while preserving statistical relevance.
+                            The central data table presents anonymised synthetic patient records, including attributes
+                            such as <em>name</em>, <em>town</em>, <em>age</em>, <em>heart rate</em>, and
+                            <em>diagnosis</em>. These records are using differential privacy noise, helping prevent
+                            re-identification of individuals while preserving statistical relevance.
                         </p>
 
-                        <h4>📈 Accuracy vs Privacy Chart (MAE)</h4>
+                        <h4>📈Accuracy vs Privacy Chart (MAE)</h4>
                         <p>
-                            The two charts visualise the trade-off between privacy and accuracy using <strong>Mean Absolute Error (MAE)</strong>. As epsilon (ε) increases, noise decreases, resulting in more accurate but less private data. Conversely, smaller ε-values increase privacy by introducing more noise.
+                            The two charts visualise the trade-off between privacy and accuracy using <strong>Mean
+                                Absolute Error (MAE)</strong>. As epsilon (ε) increases, noise decreases, resulting in
+                            more accurate but less private data. Conversely, smaller ε-values increase privacy by
+                            introducing more noise.
                         </p>
 
-                        <h4>🗺️ Location Privacy Map</h4>
+                        <h4>🗺️Location Privacy Map</h4>
                         <p>
-                            The map shows randomised patient locations, obfuscated with Laplace noise. Markers represent patients, and their geographic distortion depends on the current <strong>location ε</strong> setting. Lower ε-values mean more geographic privacy.
+                            The map shows randomised patient locations, obfuscated with Laplace noise. Markers represent
+                            patients, and their geographic distortion depends on the current <strong>location ε</strong>
+                            setting. Lower ε-values mean more geographic privacy.
                         </p>
                     </div>
 
                     <!-- Column 2 -->
                     <div style="flex: 1; min-width: 300px;">
-                        <h4>🎚️ Attribute & Location Sliders</h4>
+                        <h4>📍Attribute & Location Sliders</h4>
                         <ul>
-                            <li><strong>ε (Attributes):</strong> Controls noise added to fields like age and heart rate.</li>
-                            <li><strong>ε (Location):</strong> Controls the distortion of geographic coordinates (latitude/longitude).</li>
-                            <li><strong>ε (Table Noise):</strong> Applies noise specifically to table-level views of data.</li>
+                            <li><strong>ε (Attributes):</strong> Controls noise added to fields like age and heart rate.
+                            </li>
+                            <li><strong>ε (Location):</strong> Controls the distortion of geographic coordinates
+                                (latitude/longitude).</li>
+                            <li><strong>ε (Table Noise):</strong> Applies noise specifically to table-level views of
+                                data.</li>
                         </ul>
                         <p>
-                            Adjusting these sliders updates the map and data table in real time, letting users observe the impact of different privacy levels on data accuracy.
+                            Adjusting these sliders updates the map and data table in real time, letting users observe
+                            the impact of different privacy levels on data accuracy.
                         </p>
 
-                        <h4>🧠 Attack Simulation & Vulnerability Detection</h4>
+                        <h4>👺Attack Simulation & Vulnerability Detection</h4>
                         <p>
-                            This system also includes an Attack Simulation Mode that mimics <em>re-identification</em> and <em>membership inference</em> attacks. Vulnerable users who are at risk of exposure are identified based on their privacy risk scores.
+                            This system also includes an Attack Simulation Mode that mimics <em>re-identification</em>
+                            and <em>membership inference</em> attacks. Vulnerable users who are at risk of exposure are
+                            identified based on their privacy risk scores.
                         </p>
                         <ul>
                             <li>Clicking "Simulate" runs a backend attack using selected attributes.</li>
-                            <li>"Details" opens a modal showing sensitive fields (e.g. name, town, age, vital signs).</li>
-                            <li>As the ε slider moves right, more vulnerable users appear, mimicking increased exposure risk.</li>
+                            <li>"Details" opens a modal showing sensitive fields (e.g. name, town, age, vital signs).
+                            </li>
+                            <li>As the ε slider moves right, more vulnerable users appear, mimicking increased exposure
+                                risk.</li>
                         </ul>
                         <p>
-                            The panel reveals up to 10 vulnerable users, with visibility increasing as privacy decreases (from <em>More Private</em> to <em>Less Private</em>).
+                            The panel reveals up to 10 vulnerable users, with visibility increasing as privacy decreases
+                            (from <em>More Private</em> to <em>Less Private</em>).
                         </p>
                     </div>
                 </div>
 
-                <p style="margin-top: 25px;"><em>Created as part of the <strong>Privacy Enhancing Technologies (PETs) Summer Internship, 2025</strong><br>
-                Technologies: Flask · Leaflet.js · Chart.js · HTML/CSS/JS</em></p>
+                <p style="margin-top: 25px;"><em>Created as part of the <strong>Privacy Enhancing Technologies (PETs)
+                            Summer Internship, 2025</strong><br>
+                        Technologies: Flask - Leaflet.js - Chart.js - HTML/CSS/JS</em></p>
             </div>
         </div>
 
@@ -516,7 +537,7 @@
                     <!-- get accuracy_metrics HTTP JSON response  -->
 
                     <!-- JSON response to document.querySelector('input[name="epsilon_avg"]').value = val; -->
-                    <input type="hidden" name="epsilon_count" value="0.5">      
+                    <input type="hidden" name="epsilon_count" value="0.5">
 
                 </div>
 
@@ -755,7 +776,6 @@
             }
 
 
-
             function rerunAttackWithNewEpsilon(epsilon) {
                 if (!lastAttackPayload) return;
                 const updatedPayload = { ...lastAttackPayload, epsilon: parseFloat(epsilon) };
@@ -800,7 +820,7 @@
                     }
                 });
             }
-            
+
             async function fetchVulnerableUsersByEpsilon(epsilon) {
                 try {
                     const res = await fetch(`/vulnerable_users?epsilon=${epsilon}`);
@@ -839,9 +859,6 @@
                     console.error("Failed to fetch vulnerable users:", err);
                 }
             }
-
-
-
 
             //  Alter noise functions
             // Fetch and update attribute-based noise (ε for age, etc.)
@@ -1030,7 +1047,7 @@
 
         <script>
             document.addEventListener("DOMContentLoaded", async function () {
-                // 1. Initialize map
+                // 1. Initialise map
                 if (!map) {
                     map = L.map('map').setView([53.5, -7.6], 6);
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
