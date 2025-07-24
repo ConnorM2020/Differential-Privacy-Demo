@@ -849,7 +849,7 @@
                     table.appendChild(headerRow);
 
                     users.forEach(user => {
-                        addVulnerableUserRow(table, user);  // ✅ Uses working version
+                        addVulnerableUserRow(table, user);  // Uses working version
                     });
 
                     container.appendChild(heading);
@@ -921,7 +921,7 @@
                     label.style.backgroundColor = "#ff4d4d"; // Red
                 }
             }
-
+            // Functions for colour Location
             function updateLocationPrivacyLabel(val) {
                 const label = document.getElementById("location_privacy_label");
                 const epsilon = parseFloat(val);
@@ -937,7 +937,7 @@
                     label.style.backgroundColor = "#ff4d4d"; // Red
                 }
             }
-
+            // Function for colour Attribute 
             function updateTableNoiseLabel(val) {
                 const label = document.getElementById("epsilon-table-value");
                 const epsilon = parseFloat(val).toFixed(2);
@@ -1012,7 +1012,7 @@
                     table.appendChild(tr);
                 });
 
-                // 👇 Map rendering logic updated to conditionally scramble name
+                // Map rendering logic updated to conditionally scramble name
                 if (markerLayer) {
                     markerLayer.clearLayers();
                 } else {
@@ -1104,6 +1104,7 @@
         <!-- Always place the endif - after the \script -->
     </div>
 </body>
+
 </html>
 
 
